@@ -1,9 +1,10 @@
-import { Button } from '@/components/ui/button'
+import { Providers } from './providers'
+import Router from './Router'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <Button>iVelox</Button>
-    </div>
+    <Providers>
+      <Router />
+    </Providers>
   )
 }
