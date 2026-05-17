@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Agent skills (local tooling, not project code)
+.agents/
+skills-lock.json

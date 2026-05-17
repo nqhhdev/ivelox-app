@@ -15,3 +15,6 @@ npm install
 cp .env.example .env.local  # fill in your Supabase keys
 npm run dev
 ```
+
+## Product Docs
+- UI/UX reference decision: [docs/ui-reference-ludocode.md](docs/ui-reference-ludocode.md)
