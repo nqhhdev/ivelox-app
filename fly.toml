@@ -1,4 +1,4 @@
-app = "ivelox-app"
+app = "ivelox-fe"
 primary_region = "sin"
 
 [build]
