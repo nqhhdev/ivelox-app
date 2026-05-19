@@ -47,6 +47,7 @@ function EmailForm() {
             registration={register('password')}
             placeholder="••••••••"
             hasError={!!errors.password}
+            autoComplete="current-password"
             style={inputStyle(!!errors.password)}
           />
           {errors.password && <p style={{ fontSize: 12, color: tokens.danger, marginTop: 4 }}>{t(`auth.errors.${errors.password.message}`)}</p>}

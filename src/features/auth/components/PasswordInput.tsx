@@ -24,9 +24,10 @@ interface PasswordInputProps {
   style?: React.CSSProperties
   hasError?: boolean
   tone?: 'dark' | 'light'
+  autoComplete?: 'current-password' | 'new-password'
 }
 
-export function PasswordInput({ registration, placeholder = '••••••••', style = {}, hasError = false, tone = 'dark' }: PasswordInputProps) {
+export function PasswordInput({ registration, placeholder = '••••••••', style = {}, hasError = false, tone = 'dark', autoComplete = 'new-password' }: PasswordInputProps) {
   const [show, setShow] = useState(false)
   const iconColor = hasError ? '#ef4444' : tone === 'dark' ? 'rgba(255,255,255,0.4)' : '#9ca3af'
 
@@ -36,7 +37,7 @@ export function PasswordInput({ registration, placeholder = '••••••�
         {...registration}
         type={show ? 'text' : 'password'}
         placeholder={placeholder}
-        autoComplete="new-password"
+        autoComplete={autoComplete}
         style={{
           width: '100%', boxSizing: 'border-box',
           paddingRight: 44,

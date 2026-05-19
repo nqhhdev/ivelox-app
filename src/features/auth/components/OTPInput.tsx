@@ -39,6 +39,8 @@ export function OTPInput({ value, onChange }: OTPInputProps) {
           ref={el => { refs.current[i] = el }}
           type="text"
           inputMode="numeric"
+          autoComplete="one-time-code"
+          aria-label={`OTP digit ${i + 1}`}
           maxLength={1}
           value={d}
           autoFocus={i === 0}

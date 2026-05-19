@@ -119,8 +119,8 @@ export const tokens = {
 | `/login?v=1` | `LoginPage` V1 | AuthGuard |
 | `/login?v=3` | `LoginPage` V3 | AuthGuard |
 | `/register` | `RegisterPage` | AuthGuard |
-| `/verify-email` | `VerifyEmailPage` (link mode) | AuthGuard |
-| `/verify-email?mode=otp` | `VerifyEmailPage` (OTP mode) | AuthGuard |
+| `/verify-email` | `VerifyEmailPage` (link mode) | — |
+| `/verify-email?mode=otp` | `VerifyEmailPage` (OTP mode) | — |
 | `/forgot-password` | `ForgotPasswordPage` | AuthGuard |
 | `/auth/callback` | `CallbackPage` | — |
 | `/onboarding` | Redirect → `/onboarding/welcome` | ProtectedRoute |

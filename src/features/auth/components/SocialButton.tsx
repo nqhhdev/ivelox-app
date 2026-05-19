@@ -20,6 +20,7 @@ export function SocialButton({ onClick, loading = false, dark = false }: SocialB
   const { t } = useTranslation()
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={loading}
       style={{
