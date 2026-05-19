@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 210" role="img" aria-label="iVelox logo">
+  <defs>
+    <linearGradient id="markGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B68CFF"/>
+      <stop offset="45%" stop-color="#8B3DFF"/>
+      <stop offset="100%" stop-color="#35C8FF"/>
+    </linearGradient>
+
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8E4DFF"/>
+      <stop offset="35%" stop-color="#F5F2FF"/>
+      <stop offset="72%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#72CFFF"/>
+    </linearGradient>
+
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="0.55 0 0 0 0.25
+                0 0.20 0 0 0.05
+                0 0 1.00 0 0.95
+                0 0 0 0.8 0" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g filter="url(#softGlow)">
+    <path d="M57 62 C76 45 106 49 119 75 L159 155 C164 166 156 179 144 179 H117 C110 179 104 175 101 169 L45 83 C41 76 47 68 57 62Z"
+          fill="url(#markGradient)"/>
+    <path d="M151 63 C166 50 192 54 202 75 L224 121 C229 132 221 145 209 145 H184 C178 145 172 141 169 135 L139 84 C135 76 142 69 151 63Z"
+          fill="url(#markGradient)" opacity="0.95"/>
+    <text x="270" y="150"
+          font-family="Inter, Geist, SF Pro Display, Helvetica Neue, Arial, sans-serif"
+          font-size="118"
+          font-weight="650"
+          letter-spacing="-7"
+          fill="url(#textGradient)">iVelox</text>
+  </g>
+</svg>
