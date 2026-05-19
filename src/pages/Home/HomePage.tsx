@@ -23,7 +23,8 @@ export default function HomePage() {
   const { displayName, targetBand, selfReport } = useOnboardingStore()
 
   const name = displayName || user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
-  const avgBand = (Object.values(selfReport).reduce((a, b) => a + b, 0) / 4)
+  const reportValues = Object.values(selfReport).map(v => (typeof v === 'number' ? v : 0))
+  const avgBand = reportValues.length > 0 ? reportValues.reduce((a, b) => a + b, 0) / reportValues.length : 0
 
   return (
     <div style={{

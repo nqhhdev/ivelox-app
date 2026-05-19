@@ -95,9 +95,10 @@ export const useOnboardingStore = create<OnboardingState>()(
             targetBand: state.targetBand,
             targetDate: state.targetDate,
           })
-        } catch {
-          // Network error: keep isComplete=true locally, will retry on next load
-          // Server error is handled at call site via thrown error
+        } catch (err) {
+          // Network error: keep isComplete=true locally for offline-first UX
+          // Re-throw so call sites can show error feedback if needed
+          throw err
         }
       },
 

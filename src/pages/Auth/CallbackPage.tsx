@@ -18,11 +18,14 @@ export default function CallbackPage() {
       sessionStorage.removeItem('pending_verify_email')
 
       // Broadcast to VerifyEmailPage on any device/tab that email is confirmed
+      // Must wait for SUBSCRIBED status before sending to avoid dropped messages
       const channel = supabase.channel(`email-verified:${userId}`)
-      await channel.subscribe()
-      channel.send({ type: 'broadcast', event: 'verified', payload: {} })
-      // Small delay to ensure message is delivered before we leave
-      setTimeout(() => supabase.removeChannel(channel), 1000)
+      channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.send({ type: 'broadcast', event: 'verified', payload: {} })
+          setTimeout(() => supabase.removeChannel(channel), 1000)
+        }
+      })
 
       setStatus('verified')
     }

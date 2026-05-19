@@ -48,7 +48,7 @@ export function useAuthListener() {
       useAuthStore.setState({ session, user: session?.user ?? null, loading: false })
       // Clean up token hash from URL after Supabase exchanges it
       if (window.location.hash.includes('access_token')) {
-        window.history.replaceState(null, '', window.location.pathname)
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
       }
     })
 
@@ -56,7 +56,7 @@ export function useAuthListener() {
       useAuthStore.setState({ session, user: session?.user ?? null, loading: false })
       // Clean URL hash after token exchange
       if (event === 'SIGNED_IN' && window.location.hash.includes('access_token')) {
-        window.history.replaceState(null, '', window.location.pathname)
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
       }
     })
 
