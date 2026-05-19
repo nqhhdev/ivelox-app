@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for ivelox-app-noble-dew-8243 on 2026-05-19T14:24:16+07:00
+# fly.toml app configuration file generated for ivelox-app on 2026-05-19T07:29:05Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'ivelox-app-noble-dew-8243'
+app = 'ivelox-app'
 primary_region = 'sin'
 
 [build]
