@@ -1,97 +1,59 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/shared/hooks/useAuth'
-import { useOnboardingStore } from '@/features/onboarding/hooks/useOnboardingStore'
-
-// Auth pages
-import { LoginPage } from '@/features/auth/pages/LoginPage'
-import { RegisterPage } from '@/features/auth/pages/RegisterPage'
-import { VerifyEmailPage } from '@/features/auth/pages/VerifyEmailPage'
-import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
-
-// Onboarding pages
-import { OnboardingWelcome } from '@/features/onboarding/components/OnboardingWelcome'
-import { StepProfile } from '@/features/onboarding/components/StepProfile'
-import { StepPlacement } from '@/features/onboarding/components/StepPlacement'
-import { StepGoals } from '@/features/onboarding/components/StepGoals'
-import { StepSummary } from '@/features/onboarding/components/StepSummary'
-
-// Existing pages
-import CallbackPage from '@/pages/Auth/CallbackPage'
-import HomePage from '@/pages/Home/HomePage'
-
-// Health pages
+import { usePlatformFeatures } from '@/shared/hooks/usePlatformFeatures'
+import { OtpLoginPage } from '@/features/auth/pages/OtpLoginPage'
+import { PortfolioPage } from '@/features/portfolio/pages/PortfolioPage'
 import { HealthDashboardPage } from '@/features/health/pages/HealthDashboardPage'
 import { MealLogPage } from '@/features/health/pages/MealLogPage'
 
-// ── Guards ────────────────────────────────────────────────────────────────────
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuthStore()
-  if (loading) return <LoadingScreen />
-  if (!user) return <Navigate to="/login" replace />
-  return <>{children}</>
-}
-
-function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuthStore()
-  if (loading) return <LoadingScreen />
-  if (user) return <Navigate to="/" replace />
-  return <>{children}</>
-}
-
-function OnboardingGuard({ children }: { children: React.ReactNode }) {
-  const { isComplete } = useOnboardingStore()
-  if (isComplete) return <Navigate to="/" replace />
-  return <>{children}</>
-}
-
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf9f5' }}>
-      <div style={{ fontSize: 14, color: '#9ca3af', fontFamily: 'system-ui, sans-serif' }}>Loading...</div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1218' }}>
+      <div style={{ fontSize: 14, color: 'rgba(232,238,242,0.45)', fontFamily: 'system-ui, sans-serif' }}>Loading...</div>
     </div>
   )
 }
 
-// ── Router ────────────────────────────────────────────────────────────────────
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, loading } = useAuthStore()
+  if (loading) return <LoadingScreen />
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, loading } = useAuthStore()
+  if (loading) return <LoadingScreen />
+  if (isAuthenticated) return <Navigate to="/health" replace />
+  return <>{children}</>
+}
+
+function HealthRoute({ children }: { children: React.ReactNode }) {
+  const { data, isLoading, isError } = usePlatformFeatures()
+  if (isLoading) return <LoadingScreen />
+  if (isError || data?.health.enabled === false) {
+    return <Navigate to="/" replace />
+  }
+  return <ProtectedRoute>{children}</ProtectedRoute>
+}
 
 export default function Router() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Auth routes — redirect to / if already logged in */}
-        <Route path="/login" element={<AuthGuard><LoginPage /></AuthGuard>} />
-        <Route path="/register" element={<AuthGuard><RegisterPage /></AuthGuard>} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/forgot-password" element={<AuthGuard><ForgotPasswordPage /></AuthGuard>} />
-        <Route path="/auth/callback" element={<CallbackPage />} />
+        <Route path="/" element={<PortfolioPage />} />
+        <Route path="/login" element={<AuthGuard><OtpLoginPage /></AuthGuard>} />
 
-        {/* Onboarding routes — protected + onboarding guard */}
-        <Route path="/onboarding" element={<Navigate to="/onboarding/welcome" replace />} />
-        <Route path="/onboarding/welcome" element={
-          <ProtectedRoute><OnboardingGuard><OnboardingWelcome /></OnboardingGuard></ProtectedRoute>
-        } />
-        <Route path="/onboarding/step/1" element={
-          <ProtectedRoute><OnboardingGuard><StepProfile /></OnboardingGuard></ProtectedRoute>
-        } />
-        <Route path="/onboarding/step/2" element={
-          <ProtectedRoute><OnboardingGuard><StepPlacement /></OnboardingGuard></ProtectedRoute>
-        } />
-        <Route path="/onboarding/step/3" element={
-          <ProtectedRoute><OnboardingGuard><StepGoals /></OnboardingGuard></ProtectedRoute>
-        } />
-        <Route path="/onboarding/step/4" element={
-          <ProtectedRoute><OnboardingGuard><StepSummary /></OnboardingGuard></ProtectedRoute>
-        } />
+        <Route path="/health" element={<HealthRoute><HealthDashboardPage /></HealthRoute>} />
+        <Route path="/health/log" element={<HealthRoute><MealLogPage /></HealthRoute>} />
 
-        {/* Home — protected */}
-        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        {/* Legacy IELTS / Supabase auth → portfolio or login */}
+        <Route path="/register" element={<Navigate to="/login" replace />} />
+        <Route path="/verify-email" element={<Navigate to="/login" replace />} />
+        <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
+        <Route path="/auth/callback" element={<Navigate to="/login" replace />} />
+        <Route path="/onboarding/*" element={<Navigate to="/" replace />} />
 
-        {/* Health — protected */}
-        <Route path="/health" element={<ProtectedRoute><HealthDashboardPage /></ProtectedRoute>} />
-        <Route path="/health/log" element={<ProtectedRoute><MealLogPage /></ProtectedRoute>} />
-
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

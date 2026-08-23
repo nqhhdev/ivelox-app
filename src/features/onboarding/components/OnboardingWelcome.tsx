@@ -4,7 +4,6 @@ import { LogoMark } from '@/shared/ui/LogoMark'
 import { Pill } from '@/shared/ui/Pill'
 import { LanguageSwitcher } from '@/shared/ui/LanguageSwitcher'
 import { tokens } from '@/shared/ui/tokens'
-import { useAuthStore } from '@/shared/hooks/useAuth'
 import { useOnboardingStore } from '../hooks/useOnboardingStore'
 
 const STEP_ICONS = ['👤', '🎯', '👑', '🏆']
@@ -13,10 +12,9 @@ const STEP_XP = [20, 80, 40, 60]
 export function OnboardingWelcome() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user } = useAuthStore()
   const { setStep } = useOnboardingStore()
 
-  const firstName = user?.user_metadata?.full_name?.split(' ')[0] ?? user?.email?.split('@')[0] ?? 'there'
+  const firstName = 'there'
 
   const steps = [
     t('onboarding.welcome.steps.profile', { returnObjects: true }) as { title: string; sub: string },
