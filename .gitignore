@@ -26,3 +26,4 @@ dist-ssr
 # Agent skills (local tooling, not project code)
 .agents/
 skills-lock.json
+.worktrees/
