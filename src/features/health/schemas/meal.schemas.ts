@@ -3,7 +3,8 @@ import { z } from 'zod'
 export const mealLogFormSchema = z
   .object({
     text: z.string().trim().max(500).optional(),
-    quantity: z.coerce.number().positive(),
+    // Use number (not coerce) so RHF zodResolver input/output types align under `tsc -b`.
+    quantity: z.number().positive(),
     unit: z.enum(['g', 'ml', 'serving', 'piece']),
     meal_type: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).optional(),
     /** UI sets true when a photo is selected so empty text is allowed. */
