@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { useOnboardingStore } from '@/features/onboarding/hooks/useOnboardingStore'
 import { LogoMark } from '@/shared/ui/LogoMark'
@@ -160,6 +161,34 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Health */}
+        <div style={{ marginBottom: 40 }}>
+          <h2 style={{ margin: '0 0 14px', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+            Health
+          </h2>
+          <Link to="/health" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
+              borderRadius: 16, padding: '20px 22px',
+              backdropFilter: 'blur(12px)',
+              display: 'flex', alignItems: 'center', gap: 14,
+            }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: 10,
+                background: '#22c55e20', border: '1px solid #22c55e40',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+              }}>
+                🥗
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>Meal log</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Track today's kcal</div>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: tokens.accent }}>Open →</span>
+            </div>
+          </Link>
         </div>
 
         {/* CTA */}

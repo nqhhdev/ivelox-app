@@ -19,6 +19,10 @@ import { StepSummary } from '@/features/onboarding/components/StepSummary'
 import CallbackPage from '@/pages/Auth/CallbackPage'
 import HomePage from '@/pages/Home/HomePage'
 
+// Health pages
+import { HealthDashboardPage } from '@/features/health/pages/HealthDashboardPage'
+import { MealLogPage } from '@/features/health/pages/MealLogPage'
+
 // ── Guards ────────────────────────────────────────────────────────────────────
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -82,6 +86,10 @@ export default function Router() {
 
         {/* Home — protected */}
         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+
+        {/* Health — protected */}
+        <Route path="/health" element={<ProtectedRoute><HealthDashboardPage /></ProtectedRoute>} />
+        <Route path="/health/log" element={<ProtectedRoute><MealLogPage /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
