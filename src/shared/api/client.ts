@@ -22,7 +22,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const error = await res.json().catch(() => ({ error: res.statusText }))
     throw new Error(error.error ?? 'Request failed')
   }
-  return res.json() as Promise<T>
+  if (res.status === 204 || res.headers.get('content-length') === '0') {
+    return undefined as T
+  }
+  const text = await res.text()
+  if (!text) {
+    return undefined as T
+  }
+  return JSON.parse(text) as T
 }
 
 export const apiClient = {
