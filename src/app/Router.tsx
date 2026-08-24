@@ -8,8 +8,8 @@ import { MealLogPage } from '@/features/health/pages/MealLogPage'
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1218' }}>
-      <div style={{ fontSize: 14, color: 'rgba(232,238,242,0.45)', fontFamily: 'system-ui, sans-serif' }}>Loading...</div>
+    <div className="grg-loading" aria-live="polite">
+      Loading
     </div>
   )
 }

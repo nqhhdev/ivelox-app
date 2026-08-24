@@ -18,7 +18,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthBootstrap>{children}</AuthBootstrap>
-      <Toaster position="top-right" richColors closeButton />
+      <Toaster
+        position="top-right"
+        closeButton
+        theme="dark"
+        toastOptions={{
+          style: {
+            background: 'rgb(3, 9, 11)',
+            border: '1px solid rgb(11, 57, 84)',
+            color: 'rgb(238, 240, 242)',
+            fontFamily: "'Work Sans', Lato, sans-serif",
+          },
+        }}
+      />
     </QueryClientProvider>
   )
 }

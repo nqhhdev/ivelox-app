@@ -1,5 +1,3 @@
-import type { CSSProperties } from 'react'
-import { tokens } from '@/shared/ui/tokens'
 import type { FoodItem, FoodUnit, ResolveResult } from '../types'
 
 export interface ResolvePreviewProps {
@@ -12,19 +10,6 @@ export interface ResolvePreviewProps {
   onQuantityChange: (value: number) => void
   onConfirm: () => void
   onBack: () => void
-}
-
-const inputStyle: CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box',
-  padding: '12px 14px',
-  borderRadius: 12,
-  border: '1.5px solid rgba(255,255,255,0.12)',
-  background: 'rgba(255,255,255,0.06)',
-  color: '#fff',
-  fontFamily: tokens.font,
-  fontSize: 14,
-  outline: 'none',
 }
 
 function fmt(n: number): string {
@@ -53,68 +38,36 @@ export function ResolvePreview({
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="grg-stack">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Preview</h2>
-        <span style={{
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: 0.4,
-          textTransform: 'uppercase',
-          padding: '4px 10px',
-          borderRadius: 999,
-          background: source === 'cache' ? 'rgba(34,197,94,0.18)' : 'rgba(170,59,255,0.22)',
-          color: source === 'cache' ? '#86efac' : '#e9d5ff',
-          fontFamily: tokens.mono,
-        }}>
-          {source}
-        </span>
+        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Preview</h2>
+        <span className={`grg-badge${source === 'cache' ? '' : ' grg-badge--muted'}`}>{source}</span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="grg-meal-list">
         {items.map((item, i) => (
-          <div
-            key={`${item.name}-${i}`}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.09)',
-              borderRadius: 14,
-              padding: '14px 16px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{item.name}</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#fbbf24', fontFamily: tokens.mono }}>
-                {fmt(item.kcal)} kcal
+          <div key={`${item.name}-${i}`} className="grg-meal-row">
+            <div className="grg-meal-row__body">
+              <div className="grg-meal-row__title">{item.name}</div>
+              <div className="grg-meal-row__meta">
+                {fmt(item.quantity)} {item.unit}
+                {' · '}P {fmt(item.protein_g)}g
+                {' · '}C {fmt(item.carb_g)}g
+                {' · '}F {fmt(item.fat_g)}g
               </div>
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontFamily: tokens.mono }}>
-              {fmt(item.quantity)} {item.unit}
-              {' · '}P {fmt(item.protein_g)}g
-              {' · '}C {fmt(item.carb_g)}g
-              {' · '}F {fmt(item.fat_g)}g
+            <div className="grg-meal-row__kcal">
+              <strong>{fmt(item.kcal)}</strong>
+              <span>kcal</span>
             </div>
           </div>
         ))}
       </div>
 
-      {notes && (
-        <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.45 }}>{notes}</p>
-      )}
+      {notes && <p className="grg-lead" style={{ marginBottom: 0 }}>{notes}</p>}
 
       <div>
-        <label
-          htmlFor="health-preview-qty"
-          style={{
-            display: 'block',
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.45)',
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-            marginBottom: 6,
-          }}
-        >
+        <label htmlFor="health-preview-qty" className="grg-label">
           Quantity ({unit})
         </label>
         <input
@@ -127,52 +80,16 @@ export function ResolvePreview({
             const n = Number(e.target.value)
             if (Number.isFinite(n) && n > 0) onQuantityChange(n)
           }}
-          style={inputStyle}
+          className="grg-input"
         />
-        <p style={{ margin: '6px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
-          Totals scale with quantity · {fmt(totals.kcal)} kcal
-        </p>
+        <p className="grg-hint">Totals scale with quantity · {fmt(totals.kcal)} kcal</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button
-          type="button"
-          onClick={onBack}
-          disabled={confirming}
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            borderRadius: 12,
-            background: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            color: 'rgba(255,255,255,0.7)',
-            fontFamily: tokens.font,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: confirming ? 'default' : 'pointer',
-          }}
-        >
+      <div className="grg-btn-row">
+        <button type="button" className="grg-btn grg-btn--quiet" onClick={onBack} disabled={confirming}>
           Back
         </button>
-        <button
-          type="button"
-          onClick={onConfirm}
-          disabled={confirming}
-          style={{
-            flex: 2,
-            padding: '12px 16px',
-            borderRadius: 12,
-            background: 'linear-gradient(135deg, #aa3bff, #6d28d9)',
-            color: '#fff',
-            border: 'none',
-            fontFamily: tokens.font,
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: confirming ? 'default' : 'pointer',
-            boxShadow: '0 12px 32px rgba(170,59,255,0.40)',
-            opacity: confirming ? 0.7 : 1,
-          }}
-        >
+        <button type="button" className="grg-btn" onClick={onConfirm} disabled={confirming} style={{ flex: 2 }}>
           {confirming ? 'Saving…' : 'Confirm meal'}
         </button>
       </div>

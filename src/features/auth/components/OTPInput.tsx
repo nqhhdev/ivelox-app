@@ -1,16 +1,15 @@
 import { useRef, type KeyboardEvent, type ClipboardEvent } from 'react'
-import { tokens } from '@/shared/ui/tokens'
 
 interface OTPInputProps {
   value: string
   onChange: (value: string) => void
+  /** @deprecated GRG theme is always dark */
   tone?: 'light' | 'dark'
 }
 
-export function OTPInput({ value, onChange, tone = 'light' }: OTPInputProps) {
+export function OTPInput({ value, onChange }: OTPInputProps) {
   const digits = value.replace(/\D/g, '').split('').concat(Array(6).fill('')).slice(0, 6)
   const refs = useRef<(HTMLInputElement | null)[]>([])
-  const dark = tone === 'dark'
   const len = value.replace(/\D/g, '').length
   const activeIndex = Math.min(len, 5)
 
@@ -36,16 +35,16 @@ export function OTPInput({ value, onChange, tone = 'light' }: OTPInputProps) {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+    <div className="grg-otp-row">
       {digits.map((d, i) => {
         const active = i === activeIndex && len < 6
-        const border = active || d
-          ? (dark ? '#7ec8c8' : tokens.accent)
-          : (dark ? 'rgba(255,255,255,0.22)' : tokens.borderStrong)
+        const filled = Boolean(d)
         return (
           <input
             key={i}
-            ref={(el) => { refs.current[i] = el }}
+            ref={(el) => {
+              refs.current[i] = el
+            }}
             type="text"
             inputMode="numeric"
             autoComplete={i === 0 ? 'one-time-code' : 'off'}
@@ -56,26 +55,7 @@ export function OTPInput({ value, onChange, tone = 'light' }: OTPInputProps) {
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
-            style={{
-              width: 48,
-              height: 56,
-              borderRadius: 12,
-              border: `1.5px solid ${border}`,
-              boxShadow: active
-                ? (dark ? '0 0 0 3px rgba(126,200,200,0.25)' : `0 0 0 4px ${tokens.accentSoft}`)
-                : 'none',
-              background: d
-                ? (dark ? 'rgba(126,200,200,0.15)' : tokens.accentSoft)
-                : (dark ? 'rgba(255,255,255,0.06)' : '#fff'),
-              fontFamily: tokens.mono,
-              fontSize: 24,
-              fontWeight: 700,
-              color: d
-                ? (dark ? '#7ec8c8' : tokens.accent)
-                : (dark ? 'rgba(255,255,255,0.85)' : tokens.ink),
-              textAlign: 'center',
-              outline: 'none',
-            }}
+            className={`grg-otp-cell${active ? ' is-active' : ''}${filled ? ' is-filled' : ''}`}
           />
         )
       })}

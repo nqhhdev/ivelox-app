@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AuthShell } from '@/features/auth/components/AuthShell'
 import { OTPInput } from '@/features/auth/components/OTPInput'
-import { LogoMark } from '@/shared/ui/LogoMark'
-import { tokens } from '@/shared/ui/tokens'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 
 export function OtpLoginPage() {
@@ -48,58 +46,32 @@ export function OtpLoginPage() {
     }
   }
 
+  const canVerify = code.replace(/\D/g, '').length === 6
+
   return (
-    <AuthShell tone="dark">
-      <div style={{ width: '100%', maxWidth: 420, padding: '32px 24px', position: 'relative', zIndex: 1 }}>
-        <div style={{ marginBottom: 28 }}>
-          <LogoMark />
-        </div>
-        <h1 style={{ margin: '0 0 8px', fontSize: 28, fontWeight: 800, letterSpacing: -0.8 }}>
-          Owner login
-        </h1>
-        <p style={{ margin: '0 0 28px', fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+    <AuthShell>
+      <div className="grg-narrow grg-narrow-sm" style={{ paddingTop: '2rem', paddingBottom: '3rem' }}>
+        <p className="grg-eyebrow">Access</p>
+        <h1>Owner login</h1>
+        <p className="grg-lead">
           Tap Send OTP, then enter the 6-digit code from Telegram.
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className="grg-stack">
           <button
             type="button"
+            className="grg-btn grg-btn--block"
             disabled={busySend}
             onClick={() => void onRequest()}
-            style={{
-              width: '100%',
-              padding: '14px 18px',
-              borderRadius: 12,
-              border: 'none',
-              background: tokens.accent,
-              color: '#fff',
-              fontFamily: tokens.font,
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: busySend ? 'wait' : 'pointer',
-              opacity: busySend ? 0.7 : 1,
-            }}
           >
             {busySend ? 'Sending…' : sent ? 'Resend OTP' : 'Send OTP'}
           </button>
 
           <div>
-            <label
-              htmlFor="otp-code"
-              style={{
-                display: 'block',
-                marginBottom: 12,
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: 0.6,
-                textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.45)',
-              }}
-            >
+            <label htmlFor="otp-code" className="grg-label">
               Enter code
             </label>
-            <OTPInput value={code} onChange={setCode} tone="dark" />
-            {/* Fallback single field for paste / password managers */}
+            <OTPInput value={code} onChange={setCode} />
             <input
               id="otp-code"
               type="text"
@@ -110,42 +82,16 @@ export function OtpLoginPage() {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="••••••"
               aria-label="6-digit OTP"
-              style={{
-                marginTop: 14,
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '14px 16px',
-                borderRadius: 12,
-                border: '1.5px solid rgba(255,255,255,0.18)',
-                background: 'rgba(255,255,255,0.06)',
-                color: '#fff',
-                fontFamily: tokens.mono,
-                fontSize: 22,
-                fontWeight: 700,
-                letterSpacing: 8,
-                textAlign: 'center',
-                outline: 'none',
-              }}
+              className="grg-input grg-input--otp"
+              style={{ marginTop: 14 }}
             />
           </div>
 
           <button
             type="button"
-            disabled={busyVerify || code.replace(/\D/g, '').length !== 6}
+            className="grg-btn grg-btn--ghost grg-btn--block"
+            disabled={busyVerify || !canVerify}
             onClick={() => void onVerify()}
-            style={{
-              width: '100%',
-              padding: '14px 18px',
-              borderRadius: 12,
-              border: '1.5px solid rgba(255,255,255,0.2)',
-              background: 'transparent',
-              color: '#fff',
-              fontFamily: tokens.font,
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: busyVerify ? 'wait' : 'pointer',
-              opacity: busyVerify || code.replace(/\D/g, '').length !== 6 ? 0.45 : 1,
-            }}
           >
             {busyVerify ? 'Verifying…' : 'Verify & sign in'}
           </button>

@@ -1,5 +1,3 @@
-import type { CSSProperties } from 'react'
-import { tokens } from '@/shared/ui/tokens'
 import type { FoodUnit } from '../types'
 
 const UNITS: FoodUnit[] = ['g', 'ml', 'serving', 'piece']
@@ -19,29 +17,6 @@ export interface MealLogFormProps {
   onMealTypeChange: (value: (typeof MEAL_TYPES)[number] | undefined) => void
   onImageChange: (file: File | null) => void
   onSubmit: () => void
-}
-
-const inputStyle = (err?: boolean): CSSProperties => ({
-  width: '100%',
-  boxSizing: 'border-box',
-  padding: '12px 14px',
-  borderRadius: 12,
-  border: `1.5px solid ${err ? tokens.danger : 'rgba(255,255,255,0.12)'}`,
-  background: 'rgba(255,255,255,0.06)',
-  color: '#fff',
-  fontFamily: tokens.font,
-  fontSize: 14,
-  outline: 'none',
-})
-
-const labelStyle: CSSProperties = {
-  display: 'block',
-  fontSize: 12,
-  fontWeight: 700,
-  color: 'rgba(255,255,255,0.45)',
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
-  marginBottom: 6,
 }
 
 export function MealLogForm({
@@ -65,10 +40,12 @@ export function MealLogForm({
         e.preventDefault()
         onSubmit()
       }}
-      style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+      className="grg-stack"
     >
       <div>
-        <label htmlFor="health-food-text" style={labelStyle}>Food</label>
+        <label htmlFor="health-food-text" className="grg-label">
+          Food
+        </label>
         <input
           id="health-food-text"
           type="text"
@@ -76,14 +53,16 @@ export function MealLogForm({
           onChange={(e) => onTextChange(e.target.value)}
           placeholder="e.g. pho bo, 2 eggs…"
           maxLength={500}
-          style={inputStyle(!!error)}
+          className={`grg-input${error ? ' grg-input--error' : ''}`}
         />
-        {error && <p style={{ fontSize: 12, color: tokens.danger, margin: '6px 0 0' }}>{error}</p>}
+        {error && <p className="grg-error">{error}</p>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grg-grid-2">
         <div>
-          <label htmlFor="health-qty" style={labelStyle}>Quantity</label>
+          <label htmlFor="health-qty" className="grg-label">
+            Quantity
+          </label>
           <input
             id="health-qty"
             type="number"
@@ -91,26 +70,32 @@ export function MealLogForm({
             step="any"
             value={quantity}
             onChange={(e) => onQuantityChange(e.target.value)}
-            style={inputStyle()}
+            className="grg-input"
           />
         </div>
         <div>
-          <label htmlFor="health-unit" style={labelStyle}>Unit</label>
+          <label htmlFor="health-unit" className="grg-label">
+            Unit
+          </label>
           <select
             id="health-unit"
             value={unit}
             onChange={(e) => onUnitChange(e.target.value as FoodUnit)}
-            style={{ ...inputStyle(), cursor: 'pointer' }}
+            className="grg-select"
           >
             {UNITS.map((u) => (
-              <option key={u} value={u} style={{ color: '#111' }}>{u}</option>
+              <option key={u} value={u}>
+                {u}
+              </option>
             ))}
           </select>
         </div>
       </div>
 
       <div>
-        <label htmlFor="health-meal-type" style={labelStyle}>Meal type</label>
+        <label htmlFor="health-meal-type" className="grg-label">
+          Meal type
+        </label>
         <select
           id="health-meal-type"
           value={mealType ?? ''}
@@ -118,32 +103,21 @@ export function MealLogForm({
             const v = e.target.value
             onMealTypeChange(v === '' ? undefined : (v as (typeof MEAL_TYPES)[number]))
           }}
-          style={{ ...inputStyle(), cursor: 'pointer' }}
+          className="grg-select"
         >
-          <option value="" style={{ color: '#111' }}>Optional</option>
+          <option value="">Optional</option>
           {MEAL_TYPES.map((t) => (
-            <option key={t} value={t} style={{ color: '#111' }}>{t}</option>
+            <option key={t} value={t}>
+              {t}
+            </option>
           ))}
         </select>
       </div>
 
       <div>
-        <span style={labelStyle}>Photo</span>
+        <span className="grg-label">Photo</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <label
-            htmlFor="health-photo"
-            style={{
-              padding: '10px 14px',
-              borderRadius: 10,
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.75)',
-              fontFamily: tokens.font,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
+          <label htmlFor="health-photo" className="grg-file-btn">
             {imageName ? 'Change photo' : 'Add photo'}
           </label>
           <input
@@ -155,24 +129,10 @@ export function MealLogForm({
           />
           {imageName && (
             <>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span className="grg-hint" style={{ margin: 0, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {imageName}
               </span>
-              <button
-                type="button"
-                onClick={() => onImageChange(null)}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 8,
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  color: 'rgba(255,255,255,0.5)',
-                  fontFamily: tokens.font,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
+              <button type="button" className="grg-btn grg-btn--quiet" onClick={() => onImageChange(null)}>
                 Remove
               </button>
             </>
@@ -180,24 +140,7 @@ export function MealLogForm({
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={submitting}
-        style={{
-          padding: '14px 18px',
-          marginTop: 4,
-          background: 'linear-gradient(135deg, #aa3bff, #6d28d9)',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 12,
-          fontFamily: tokens.font,
-          fontSize: 15,
-          fontWeight: 700,
-          cursor: submitting ? 'default' : 'pointer',
-          boxShadow: '0 12px 32px rgba(170,59,255,0.40)',
-          opacity: submitting ? 0.7 : 1,
-        }}
-      >
+      <button type="submit" className="grg-btn grg-btn--block" disabled={submitting}>
         {submitting ? 'Resolving…' : 'Resolve'}
       </button>
     </form>
