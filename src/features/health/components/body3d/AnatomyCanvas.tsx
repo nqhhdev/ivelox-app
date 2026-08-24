@@ -32,10 +32,29 @@ function meshType(obj: THREE.Object3D): string {
   return 'other'
 }
 
+function prettyName(mesh: THREE.Object3D): string {
+  const raw = (mesh.name || mesh.parent?.name || 'Structure').trim()
+  return raw.replace(/\.(l|r)$/i, (m) => (m.toLowerCase() === '.l' ? ' (L)' : ' (R)'))
+}
+
 type MeshPack = {
   mesh: THREE.Mesh
   type: string
   mat: THREE.MeshStandardMaterial
+  baseColor: THREE.Color
+  baseEmissive: THREE.Color
+  baseEmissiveIntensity: number
+  baseRoughness: number
+  baseMetalness: number
+}
+
+const TINT = {
+  vessels: new THREE.Color('#c23b3b'),
+  fat: new THREE.Color('#c4a35a'),
+  skin: new THREE.Color('#c4a18a'),
+  nerve: new THREE.Color('#e6d84a'),
+  select: new THREE.Color('#3ecfff'),
+  hover: new THREE.Color('#75d18c'),
 }
 
 function buildPacks(root: THREE.Object3D): MeshPack[] {
@@ -63,93 +82,109 @@ function buildPacks(root: THREE.Object3D): MeshPack[] {
       mesh.material = mat
     }
 
-    mat.transparent = true
-    mat.metalness = 0.05
-    mat.roughness = 0.55
-    packs.push({ mesh, type: meshType(mesh), mat })
+    // Keep atlas paint: each bone/muscle keeps its own authored color
+    packs.push({
+      mesh,
+      type: meshType(mesh),
+      mat,
+      baseColor: mat.color.clone(),
+      baseEmissive: mat.emissive.clone(),
+      baseEmissiveIntensity: mat.emissiveIntensity,
+      baseRoughness: mat.roughness,
+      baseMetalness: mat.metalness,
+    })
   })
   return packs
 }
 
+function restoreBase(p: MeshPack) {
+  p.mat.color.copy(p.baseColor)
+  p.mat.emissive.copy(p.baseEmissive)
+  p.mat.emissiveIntensity = p.baseEmissiveIntensity
+  p.mat.roughness = p.baseRoughness
+  p.mat.metalness = p.baseMetalness
+  p.mat.wireframe = false
+  p.mat.transparent = true
+}
+
 /**
- * Pass 1 layer look: exclusive systems, high contrast, no muddy ghosts.
- * Muscle ≠ bone on the same focus mode (except skin peek).
+ * Layer = visibility + light tint. Never flatten every mesh to one color
+ * (that killed muscle-group identity from the Z-Anatomy GLB).
  */
-function applyLayerPass1(packs: MeshPack[], layer: AnatomyLayer, selectedName: string | null) {
-  for (const { mesh, type, mat } of packs) {
-    const selected = selectedName != null && mesh.name === selectedName
-
-    mat.transparent = true
-    mat.wireframe = false
-    mat.depthWrite = layer !== 'skin'
-    mat.emissive.setHex(0x000000)
-    mat.emissiveIntensity = 0
-
-    if (selected) {
-      mesh.visible = true
-      mat.emissive.set('#3ecfff')
-      mat.emissiveIntensity = 0.55
-      mat.opacity = 1
-      mat.needsUpdate = true
-      continue
-    }
+function applyLayer(
+  packs: MeshPack[],
+  layer: AnatomyLayer,
+  selectedName: string | null,
+  hoveredName: string | null,
+) {
+  for (const p of packs) {
+    const { mesh, type, mat } = p
+    restoreBase(p)
 
     if (type === 'muscle') {
-      mesh.visible =
+      const show =
         layer === 'skin' ||
         layer === 'muscles' ||
         layer === 'vessels' ||
         layer === 'visceral_fat' ||
         layer === 'organs'
+      mesh.visible = show
+      if (!show) continue
 
-      if (layer === 'vessels') {
-        mat.color.set('#c23b3b')
-        mat.emissive.set('#7a1010')
-        mat.emissiveIntensity = 0.4
+      if (layer === 'muscles') {
+        mat.opacity = 1
+        mat.depthWrite = true
+      } else if (layer === 'vessels') {
+        // Keep group hues, pull toward vascular red
+        mat.color.lerp(TINT.vessels, 0.55)
+        mat.emissive.copy(TINT.vessels)
+        mat.emissiveIntensity = 0.22
+        mat.opacity = 0.85
+        mat.depthWrite = true
+      } else if (layer === 'visceral_fat') {
+        mat.color.lerp(TINT.fat, 0.5)
         mat.opacity = 0.55
         mat.depthWrite = false
-      } else if (layer === 'visceral_fat') {
-        mat.color.set('#c4a35a')
-        mat.opacity = 0.35
-        mat.depthWrite = false
-      } else if (layer === 'muscles') {
-        mat.color.set('#b04a4a')
-        mat.opacity = 0.92
-        mat.depthWrite = true
       } else if (layer === 'skin') {
-        mat.color.set('#c4a18a')
-        mat.opacity = 0.22
+        mat.color.lerp(TINT.skin, 0.35)
+        mat.opacity = 0.28
         mat.depthWrite = false
       } else if (layer === 'organs') {
-        mat.color.set('#b04a4a')
-        mat.opacity = 0.15
+        mat.opacity = 0.2
         mat.depthWrite = false
       }
     } else if (type === 'bone') {
-      mesh.visible = layer === 'skeleton' || layer === 'skin' || layer === 'nerves'
+      const show = layer === 'skeleton' || layer === 'skin' || layer === 'nerves'
+      mesh.visible = show
+      if (!show) continue
 
       if (layer === 'skeleton') {
-        mat.color.set('#e8e2d6')
-        mat.emissive.set('#1a3040')
-        mat.emissiveIntensity = 0.1
-        mat.opacity = 0.95
+        mat.opacity = 1
         mat.depthWrite = true
       } else if (layer === 'nerves') {
-        mat.color.set('#e6d84a')
-        mat.emissive.set('#8a7a10')
-        mat.emissiveIntensity = 0.28
-        mat.opacity = 0.72
-        mat.depthWrite = false
+        mat.color.lerp(TINT.nerve, 0.45)
+        mat.emissive.copy(TINT.nerve)
+        mat.emissiveIntensity = 0.2
+        mat.opacity = 0.8
+        mat.depthWrite = true
       } else if (layer === 'skin') {
-        mat.color.set('#e8e2d6')
-        mat.opacity = 0.12
+        mat.opacity = 0.14
         mat.depthWrite = false
       }
     } else {
       mesh.visible = layer === 'organs' || layer === 'skin'
-      mat.color.set(layer === 'organs' ? '#c4a35a' : '#c4a18a')
-      mat.opacity = 0.4
+      mat.opacity = layer === 'organs' ? 0.55 : 0.3
       mat.depthWrite = false
+    }
+
+    if (selectedName && mesh.name === selectedName && mesh.visible) {
+      mat.emissive.copy(TINT.select)
+      mat.emissiveIntensity = 0.65
+      mat.opacity = 1
+      mat.depthWrite = true
+    } else if (hoveredName && mesh.name === hoveredName && mesh.visible) {
+      mat.emissive.copy(TINT.hover)
+      mat.emissiveIntensity = 0.35
     }
 
     mat.needsUpdate = true
@@ -160,14 +195,17 @@ function AnatomyModel({
   layer,
   selectedName,
   onSelect,
+  onHover,
 }: {
   layer: AnatomyLayer
   selectedName: string | null
-  onSelect: (name: string, type: string) => void
+  onSelect: (name: string, type: string, label: string) => void
+  onHover: (name: string | null) => void
 }) {
   const { scene } = useGLTF('/models/body.glb', true)
   const invalidate = useThree((s) => s.invalidate)
   const packsRef = useRef<MeshPack[] | null>(null)
+  const hoveredRef = useRef<string | null>(null)
 
   const root = useMemo(() => {
     const clone = scene.clone(true)
@@ -180,21 +218,41 @@ function AnatomyModel({
 
   useLayoutEffect(() => {
     if (!packsRef.current) return
-    applyLayerPass1(packsRef.current, layer, selectedName)
+    applyLayer(packsRef.current, layer, selectedName, hoveredRef.current)
     invalidate()
   }, [root, layer, selectedName, invalidate])
+
+  const paintHover = (name: string | null) => {
+    hoveredRef.current = name
+    onHover(name)
+    if (!packsRef.current) return
+    applyLayer(packsRef.current, layer, selectedName, name)
+    invalidate()
+  }
 
   return (
     <primitive
       object={root}
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation()
-        onSelect(e.object.name || 'structure', meshType(e.object))
+        const obj = e.object
+        if (!(obj as THREE.Mesh).isMesh) return
+        const label = prettyName(obj)
+        onSelect(obj.name || label, meshType(obj), label)
       }}
-      onPointerOver={() => {
+      onPointerMissed={() => {
+        paintHover(null)
+      }}
+      onPointerMove={(e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation()
+        const obj = e.object
+        if (!(obj as THREE.Mesh).isMesh) return
+        if (hoveredRef.current === obj.name) return
+        paintHover(obj.name)
         document.body.style.cursor = 'pointer'
       }}
       onPointerOut={() => {
+        paintHover(null)
         document.body.style.cursor = 'auto'
       }}
     />
@@ -252,7 +310,7 @@ export function AnatomyCanvas({
   layer: AnatomyLayer
   showJoints?: boolean
   activeJointId?: string | null
-  onPick: (name: string, type: string) => void
+  onPick: (name: string, type: string, label?: string) => void
   onJointSelect?: (id: string) => void
 }) {
   const [selectedName, setSelectedName] = useState<string | null>(null)
@@ -275,9 +333,9 @@ export function AnatomyCanvas({
       }}
     >
       <color attach="background" args={['#03090b']} />
-      <ambientLight intensity={0.45} />
-      <directionalLight position={[2.5, 4, 2]} intensity={1.25} />
-      <directionalLight position={[-2, 1, -1]} intensity={0.35} color="#5ce1ff" />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[2.5, 4, 2]} intensity={1.3} />
+      <directionalLight position={[-2, 1, -1]} intensity={0.4} color="#5ce1ff" />
       <Suspense
         fallback={
           <Html center>
@@ -288,9 +346,12 @@ export function AnatomyCanvas({
         <AnatomyModel
           layer={layer}
           selectedName={selectedName}
-          onSelect={(name, type) => {
+          onSelect={(name, type, label) => {
             setSelectedName(name)
-            onPick(name, type)
+            onPick(name, type, label)
+          }}
+          onHover={() => {
+            /* hover paint handled inside model */
           }}
         />
         <Environment preset="city" />
@@ -304,7 +365,7 @@ export function AnatomyCanvas({
             onClick={() => onJointSelect?.(j.id)}
           />
         ))}
-      <ContactShadows position={[0, -0.02, 0]} opacity={0.32} scale={4} blur={2} frames={1} />
+      <ContactShadows position={[0, -0.02, 0]} opacity={0.28} scale={4} blur={2} frames={1} />
       <OrbitControls
         makeDefault
         target={orbitTarget}

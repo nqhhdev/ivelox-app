@@ -94,7 +94,7 @@ export function MedicalAnalyticsDashboard({
   const webgl = useWebGLOk()
   const [section, setSection] = useState<Section>('anatomy')
   const [layer, setLayer] = useState<AnatomyLayer>('vessels')
-  const [picked, setPicked] = useState<{ name: string; type: string } | null>(null)
+  const [picked, setPicked] = useState<{ name: string; type: string; label: string } | null>(null)
   const [activeJoint, setActiveJoint] = useState<string | null>('knee')
   const [weight, setWeight] = useState(
     summary.weight_kg_today != null ? String(summary.weight_kg_today) : '',
@@ -248,7 +248,9 @@ export function MedicalAnalyticsDashboard({
                   layer={layer}
                   showJoints={showJoints}
                   activeJointId={activeJoint}
-                  onPick={(name, type) => setPicked({ name, type })}
+                  onPick={(name, type, label) =>
+                    setPicked({ name, type, label: label ?? name })
+                  }
                   onJointSelect={setActiveJoint}
                 />
               </Suspense>
@@ -263,7 +265,7 @@ export function MedicalAnalyticsDashboard({
 
           {(picked || tip) && !showJoints && (
             <p className="med-inspect-line">
-              <span>{picked?.name ?? 'Tip'}</span>
+              <span>{picked?.label ?? picked?.name ?? 'Tip'}</span>
               {picked ? ` · ${picked.type}` : ''}
               {tip ? ` — ${tip}` : ''}
             </p>
