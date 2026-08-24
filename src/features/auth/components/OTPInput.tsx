@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, type KeyboardEvent, type ClipboardEvent } from 'react'
 import { tokens } from '@/shared/ui/tokens'
 
 interface OTPInputProps {
@@ -11,6 +11,8 @@ export function OTPInput({ value, onChange, tone = 'light' }: OTPInputProps) {
   const digits = value.replace(/\D/g, '').split('').concat(Array(6).fill('')).slice(0, 6)
   const refs = useRef<(HTMLInputElement | null)[]>([])
   const dark = tone === 'dark'
+  const len = value.replace(/\D/g, '').length
+  const activeIndex = Math.min(len, 5)
 
   const handleChange = (index: number, char: string) => {
     if (!/^\d*$/.test(char)) return
@@ -19,13 +21,13 @@ export function OTPInput({ value, onChange, tone = 'light' }: OTPInputProps) {
     if (char && index < 5) refs.current[index + 1]?.focus()
   }
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+  const handleKeyDown = (index: number, e: KeyboardEvent) => {
     if (e.key === 'Backspace' && !digits[index] && index > 0) {
       refs.current[index - 1]?.focus()
     }
   }
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = (e: ClipboardEvent) => {
     e.preventDefault()
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
     onChange(pasted)
@@ -33,13 +35,10 @@ export function OTPInput({ value, onChange, tone = 'light' }: OTPInputProps) {
     refs.current[nextIndex]?.focus()
   }
 
-  const filled = Boolean(digits[0] && digits.every((d, i) => i >= value.replace(/\D/g, '').length || d))
-  const activeIndex = Math.min(value.replace(/\D/g, '').length, 5)
-
   return (
     <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
       {digits.map((d, i) => {
-        const active = i === activeIndex && value.replace(/\D/g, '').length < 6
+        const active = i === activeIndex && len < 6
         const border = active || d
           ? (dark ? '#7ec8c8' : tokens.accent)
           : (dark ? 'rgba(255,255,255,0.22)' : tokens.borderStrong)
@@ -62,22 +61,24 @@ export function OTPInput({ value, onChange, tone = 'light' }: OTPInputProps) {
               height: 56,
               borderRadius: 12,
               border: `1.5px solid ${border}`,
-              boxShadow: active ? (dark ? '0 0 0 3px rgba(126,200,200,0.25)' : `0 0 0 4px ${tokens.accentSoft}`) : 'none',
+              boxShadow: active
+                ? (dark ? '0 0 0 3px rgba(126,200,200,0.25)' : `0 0 0 4px ${tokens.accentSoft}`)
+                : 'none',
               background: d
                 ? (dark ? 'rgba(126,200,200,0.15)' : tokens.accentSoft)
                 : (dark ? 'rgba(255,255,255,0.06)' : '#fff'),
               fontFamily: tokens.mono,
               fontSize: 24,
               fontWeight: 700,
-              color: d ? (dark ? '#7ec8c8' : tokens.accent) : (dark ? 'rgba(255,255,255,0.85)' : tokens.ink),
+              color: d
+                ? (dark ? '#7ec8c8' : tokens.accent)
+                : (dark ? 'rgba(255,255,255,0.85)' : tokens.ink),
               textAlign: 'center',
               outline: 'none',
             }}
           />
         )
       })}
-      {/* silence unused */}
-      <span style={{ display: 'none' }}>{String(filled)}</span>
     </div>
   )
 }
