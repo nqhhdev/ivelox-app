@@ -5,7 +5,7 @@ const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const
 
 export interface MealLogFormProps {
   text: string
-  quantity: number | string
+  quantity: string
   unit: FoodUnit
   mealType?: (typeof MEAL_TYPES)[number]
   imageName?: string
@@ -65,11 +65,16 @@ export function MealLogForm({
           </label>
           <input
             id="health-qty"
-            type="number"
-            min="0.01"
-            step="any"
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
             value={quantity}
-            onChange={(e) => onQuantityChange(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value
+              if (v === '' || /^\d*\.?\d*$/.test(v)) {
+                onQuantityChange(v)
+              }
+            }}
             className="grg-input"
           />
         </div>

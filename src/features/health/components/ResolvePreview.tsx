@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { FoodItem, FoodUnit, ResolveResult } from '../types'
 
 export interface ResolvePreviewProps {
@@ -27,6 +28,12 @@ export function ResolvePreview({
   onConfirm,
   onBack,
 }: ResolvePreviewProps) {
+  const [qtyText, setQtyText] = useState(String(quantity))
+
+  useEffect(() => {
+    setQtyText(String(quantity))
+  }, [quantity])
+
   const totals = items.reduce(
     (acc, item) => ({
       kcal: acc.kcal + item.kcal,
@@ -72,12 +79,15 @@ export function ResolvePreview({
         </label>
         <input
           id="health-preview-qty"
-          type="number"
-          min="0.01"
-          step="any"
-          value={quantity}
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={qtyText}
           onChange={(e) => {
-            const n = Number(e.target.value)
+            const v = e.target.value
+            if (v !== '' && !/^\d*\.?\d*$/.test(v)) return
+            setQtyText(v)
+            const n = Number(v)
             if (Number.isFinite(n) && n > 0) onQuantityChange(n)
           }}
           className="grg-input"

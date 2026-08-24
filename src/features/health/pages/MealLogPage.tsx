@@ -69,7 +69,7 @@ export function MealLogPage() {
             error={textError}
             submitting={resolving}
             onTextChange={(v) => form.setValue('text', v, { shouldValidate: true })}
-            onQuantityChange={(v) => form.setValue('quantity', Number(v) || 0, { shouldValidate: true })}
+            onQuantityChange={(v) => form.setValue('quantity', v, { shouldValidate: true })}
             onUnitChange={(v: FoodUnit) => form.setValue('unit', v, { shouldValidate: true })}
             onMealTypeChange={(v) => form.setValue('meal_type', v, { shouldValidate: true })}
             onImageChange={setImage}

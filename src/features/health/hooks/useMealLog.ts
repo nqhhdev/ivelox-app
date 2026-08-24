@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useToast } from '@/shared/hooks/useToast'
-import { mealLogFormSchema, type MealLogFormValues } from '../schemas/meal.schemas'
+import { mealLogFormSchema, parseQuantity } from '../schemas/meal.schemas'
 import type { FoodItem, ResolveResult } from '../types'
 import { localISODate } from '../lib/date'
 import { useFoodResolve } from './useFoodResolve'
@@ -57,7 +57,7 @@ export function useMealLog() {
     resolver: zodResolver(mealLogFormSchema),
     defaultValues: {
       text: '',
-      quantity: 1,
+      quantity: '1',
       unit: 'serving',
       meal_type: undefined,
       has_image: false,
@@ -84,9 +84,10 @@ export function useMealLog() {
     }
 
     try {
+      const qty = parseQuantity(fields.quantity)
       const result = await resolve.mutateAsync({
         text: fields.text || undefined,
-        quantity: fields.quantity,
+        quantity: qty,
         unit: fields.unit,
         ...image,
       })
@@ -94,8 +95,8 @@ export function useMealLog() {
         toast.error(new Error('No foods found. Try a different description or photo.'))
         return
       }
-      setResolveQty(fields.quantity)
-      setPreviewQty(fields.quantity)
+      setResolveQty(qty)
+      setPreviewQty(qty)
       setPreview(result)
     } catch (e) {
       toast.error(e, 'Could not resolve food.')

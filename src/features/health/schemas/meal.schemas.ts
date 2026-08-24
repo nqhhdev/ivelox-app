@@ -3,8 +3,14 @@ import { z } from 'zod'
 export const mealLogFormSchema = z
   .object({
     text: z.string().trim().max(500).optional(),
-    // Use number (not coerce) so RHF zodResolver input/output types align under `tsc -b`.
-    quantity: z.number().positive(),
+    /** Kept as string while typing so leading zeros / empty field work in the input. */
+    quantity: z
+      .string()
+      .trim()
+      .min(1, 'Enter a quantity')
+      .refine((s) => Number.isFinite(Number(s)) && Number(s) > 0, {
+        message: 'Quantity must be positive',
+      }),
     unit: z.enum(['g', 'ml', 'serving', 'piece']),
     meal_type: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).optional(),
     /** UI sets true when a photo is selected so empty text is allowed. */
@@ -16,3 +22,7 @@ export const mealLogFormSchema = z
   })
 
 export type MealLogFormValues = z.infer<typeof mealLogFormSchema>
+
+export function parseQuantity(raw: string): number {
+  return Number(raw)
+}

@@ -4,7 +4,7 @@ type RefineCase = {
   name: string
   input: {
     text?: string
-    quantity: number
+    quantity: string
     unit: 'g' | 'ml' | 'serving' | 'piece'
     has_image?: boolean
   }
@@ -12,9 +12,11 @@ type RefineCase = {
 }
 
 const refineCases: RefineCase[] = [
-  { name: 'rejects empty text without image', input: { quantity: 1, unit: 'serving' }, ok: false },
-  { name: 'accepts text', input: { text: 'pho bo', quantity: 1, unit: 'serving' }, ok: true },
-  { name: 'accepts image without text', input: { quantity: 1, unit: 'serving', has_image: true }, ok: true },
+  { name: 'rejects empty text without image', input: { quantity: '1', unit: 'serving' }, ok: false },
+  { name: 'accepts text', input: { text: 'pho bo', quantity: '1', unit: 'serving' }, ok: true },
+  { name: 'accepts image without text', input: { quantity: '1', unit: 'serving', has_image: true }, ok: true },
+  { name: 'rejects empty quantity', input: { text: 'egg', quantity: '', unit: 'g' }, ok: false },
+  { name: 'rejects zero quantity', input: { text: 'egg', quantity: '0', unit: 'g' }, ok: false },
 ]
 
 /** Compile-time + import-time coverage. No test runner is configured in package.json. */
