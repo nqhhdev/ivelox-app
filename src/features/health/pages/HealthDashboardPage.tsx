@@ -6,10 +6,9 @@ import { localISODate } from '../lib/date'
 import { useMeals } from '../hooks/useMeals'
 import { useTodaySummary } from '../hooks/useTodaySummary'
 import { useMealLog } from '../hooks/useMealLog'
-import { TodaySummaryCard } from '../components/TodaySummaryCard'
 import { MealList } from '../components/MealList'
 import { MealPlanList } from '../components/MealPlanList'
-import { Body3DPanel } from '../components/Body3DPanel'
+import { MedicalAnalyticsDashboard } from '../components/MedicalAnalyticsDashboard'
 import { BoardModal } from '../components/BoardModal'
 import { MealLogForm } from '../components/MealLogForm'
 import { ResolvePreview } from '../components/ResolvePreview'
@@ -114,84 +113,46 @@ export function HealthDashboardPage() {
         </>
       }
     >
-      <div className="grg-matrioska" style={{ maxWidth: '64em' }}>
-      <p className="grg-eyebrow">Health board</p>
-      <h1>Today</h1>
-      <p className="grg-lead" style={{ marginBottom: '1rem' }}>
-        {date}
-      </p>
+      {summary.isError && (
+        <p className="grg-error" style={{ padding: '0 1.25rem' }}>
+          Could not load today&apos;s summary.
+        </p>
+      )}
 
-      <div className="grg-btn-row" style={{ marginBottom: '1.25rem' }}>
-        <button type="button" className="grg-btn" onClick={() => setPanel('log')}>
-          + Log meal
-        </button>
-        <button type="button" className="grg-btn grg-btn--ghost" onClick={() => setPanel('burns')}>
-          Log burn
-        </button>
-        <button type="button" className="grg-btn grg-btn--ghost" onClick={() => setPanel('goals')}>
-          Goals
-        </button>
-        <button
-          type="button"
-          className="grg-btn grg-btn--quiet"
-          disabled={closeMut.isPending || data.day_closed}
-          onClick={() => closeMut.mutate()}
-        >
-          {data.day_closed ? 'Day closed' : 'Close day'}
-        </button>
-      </div>
+      <MedicalAnalyticsDashboard
+        summary={data}
+        goal={goal.data}
+        saving={weightMut.isPending}
+        onSaveWeight={(kg) => weightMut.mutate(kg)}
+        onLogMeal={() => setPanel('log')}
+        onLogBurn={() => setPanel('burns')}
+        onGoals={() => setPanel('goals')}
+        onCloseDay={() => closeMut.mutate()}
+      />
 
-      {summary.isError && <p className="grg-error">Could not load today&apos;s summary.</p>}
-
-      <div className="grg-board">
-        <div className="grg-board__main">
-          <TodaySummaryCard summary={data} />
-
-          {(data.deficit_tips?.length ?? 0) > 0 && (
-            <div className="grg-panel" style={{ marginTop: '1rem' }}>
-              <p className="grg-eyebrow">Deficit / tips</p>
-              <ul style={{ margin: 0, paddingLeft: '1.1rem', color: 'var(--grg-muted)' }}>
-                {data.deficit_tips!.map((t) => (
-                  <li key={t} style={{ marginBottom: 6 }}>
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="grg-section-head">
-            <h2>Meal targets</h2>
-          </div>
+      <div className="med-dash" style={{ paddingTop: 0 }}>
+        <div className="med-card" style={{ maxWidth: 1100, margin: '0 auto 1.5rem' }}>
+          <p className="med-kicker">{date} · Meal targets & logs</p>
           <MealPlanList
             slots={data.meal_plan ?? []}
             onStatus={(meal_type, status) => slotMut.mutate({ meal_type, status })}
           />
-
-          <div className="grg-section-head">
-            <h2>Logged</h2>
-          </div>
+          <div style={{ height: 12 }} />
           {meals.list.isLoading ? (
-            <p className="grg-hint">Loading…</p>
+            <p className="med-muted">Loading meals…</p>
           ) : (
             <MealList
               meals={meals.list.data ?? []}
               deletingId={meals.remove.isPending ? meals.remove.variables : null}
               onDelete={(id) => {
                 if (!window.confirm('Delete this meal?')) return
-                meals.remove.mutate(id, { onError: (e) => toast.error(e, 'Could not delete meal.') })
+                meals.remove.mutate(id, {
+                  onError: (e) => toast.error(e, 'Could not delete meal.'),
+                })
               }}
             />
           )}
         </div>
-
-        <Body3DPanel
-          summary={data}
-          goal={goal.data}
-          saving={weightMut.isPending}
-          onSaveWeight={(kg) => weightMut.mutate(kg)}
-        />
-      </div>
       </div>
 
       {panel === 'log' && (
