@@ -4,16 +4,18 @@ import { tokens } from '@/shared/ui/tokens'
 interface OTPInputProps {
   value: string
   onChange: (value: string) => void
+  tone?: 'light' | 'dark'
 }
 
-export function OTPInput({ value, onChange }: OTPInputProps) {
-  const digits = value.split('').concat(Array(6).fill('')).slice(0, 6)
+export function OTPInput({ value, onChange, tone = 'light' }: OTPInputProps) {
+  const digits = value.replace(/\D/g, '').split('').concat(Array(6).fill('')).slice(0, 6)
   const refs = useRef<(HTMLInputElement | null)[]>([])
+  const dark = tone === 'dark'
 
   const handleChange = (index: number, char: string) => {
     if (!/^\d*$/.test(char)) return
     const next = digits.map((d, i) => (i === index ? char.slice(-1) : d))
-    onChange(next.join(''))
+    onChange(next.join('').replace(/\D/g, '').slice(0, 6))
     if (char && index < 5) refs.current[index + 1]?.focus()
   }
 
@@ -26,39 +28,56 @@ export function OTPInput({ value, onChange }: OTPInputProps) {
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
-    onChange(pasted.padEnd(6, '').slice(0, 6))
-    const nextIndex = Math.min(pasted.length, 5)
+    onChange(pasted)
+    const nextIndex = Math.min(Math.max(pasted.length - 1, 0), 5)
     refs.current[nextIndex]?.focus()
   }
 
+  const filled = Boolean(digits[0] && digits.every((d, i) => i >= value.replace(/\D/g, '').length || d))
+  const activeIndex = Math.min(value.replace(/\D/g, '').length, 5)
+
   return (
     <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-      {digits.map((d, i) => (
-        <input
-          key={i}
-          ref={el => { refs.current[i] = el }}
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          aria-label={`OTP digit ${i + 1}`}
-          maxLength={1}
-          value={d}
-          autoFocus={i === 0}
-          onChange={e => handleChange(i, e.target.value)}
-          onKeyDown={e => handleKeyDown(i, e)}
-          onPaste={handlePaste}
-          style={{
-            width: 52, height: 60,
-            borderRadius: 12,
-            border: `1.5px solid ${i === value.length && value.length < 6 ? tokens.accent : d ? tokens.accent : tokens.borderStrong}`,
-            boxShadow: i === value.length && value.length < 6 ? `0 0 0 4px ${tokens.accentSoft}` : 'none',
-            background: d ? tokens.accentSoft : '#fff',
-            fontFamily: tokens.mono, fontSize: 28, fontWeight: 700,
-            color: d ? tokens.accent : tokens.ink,
-            textAlign: 'center', outline: 'none',
-          }}
-        />
-      ))}
+      {digits.map((d, i) => {
+        const active = i === activeIndex && value.replace(/\D/g, '').length < 6
+        const border = active || d
+          ? (dark ? '#7ec8c8' : tokens.accent)
+          : (dark ? 'rgba(255,255,255,0.22)' : tokens.borderStrong)
+        return (
+          <input
+            key={i}
+            ref={(el) => { refs.current[i] = el }}
+            type="text"
+            inputMode="numeric"
+            autoComplete={i === 0 ? 'one-time-code' : 'off'}
+            aria-label={`OTP digit ${i + 1}`}
+            maxLength={1}
+            value={d}
+            autoFocus={i === 0}
+            onChange={(e) => handleChange(i, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
+            onPaste={handlePaste}
+            style={{
+              width: 48,
+              height: 56,
+              borderRadius: 12,
+              border: `1.5px solid ${border}`,
+              boxShadow: active ? (dark ? '0 0 0 3px rgba(126,200,200,0.25)' : `0 0 0 4px ${tokens.accentSoft}`) : 'none',
+              background: d
+                ? (dark ? 'rgba(126,200,200,0.15)' : tokens.accentSoft)
+                : (dark ? 'rgba(255,255,255,0.06)' : '#fff'),
+              fontFamily: tokens.mono,
+              fontSize: 24,
+              fontWeight: 700,
+              color: d ? (dark ? '#7ec8c8' : tokens.accent) : (dark ? 'rgba(255,255,255,0.85)' : tokens.ink),
+              textAlign: 'center',
+              outline: 'none',
+            }}
+          />
+        )
+      })}
+      {/* silence unused */}
+      <span style={{ display: 'none' }}>{String(filled)}</span>
     </div>
   )
 }
