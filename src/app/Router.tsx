@@ -5,6 +5,10 @@ import { OtpLoginPage } from '@/features/auth/pages/OtpLoginPage'
 import { PortfolioPage } from '@/features/portfolio/pages/PortfolioPage'
 import { HealthDashboardPage } from '@/features/health/pages/HealthDashboardPage'
 import { MealLogPage } from '@/features/health/pages/MealLogPage'
+import { BodyMetricsPage } from '@/features/health/pages/BodyMetricsPage'
+import { GoalsPage } from '@/features/health/pages/GoalsPage'
+import { BurnsPage } from '@/features/health/pages/BurnsPage'
+import { WeeklyPage } from '@/features/health/pages/WeeklyPage'
 
 function LoadingScreen() {
   return (
@@ -46,8 +50,11 @@ export default function Router() {
 
         <Route path="/health" element={<HealthRoute><HealthDashboardPage /></HealthRoute>} />
         <Route path="/health/log" element={<HealthRoute><MealLogPage /></HealthRoute>} />
+        <Route path="/health/body" element={<HealthRoute><BodyMetricsPage /></HealthRoute>} />
+        <Route path="/health/goals" element={<HealthRoute><GoalsPage /></HealthRoute>} />
+        <Route path="/health/burns" element={<HealthRoute><BurnsPage /></HealthRoute>} />
+        <Route path="/health/weekly" element={<HealthRoute><WeeklyPage /></HealthRoute>} />
 
-        {/* Legacy IELTS / Supabase auth → portfolio or login */}
         <Route path="/register" element={<Navigate to="/login" replace />} />
         <Route path="/verify-email" element={<Navigate to="/login" replace />} />
         <Route path="/forgot-password" element={<Navigate to="/login" replace />} />

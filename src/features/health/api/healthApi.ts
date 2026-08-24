@@ -1,5 +1,15 @@
 import { apiClient } from '@/shared/api/client'
-import type { DayMealSummary, FoodUnit, MealLog, ResolveResult } from '../types'
+import type {
+  BodyMetric,
+  BurnLog,
+  DayMealSummary,
+  FoodUnit,
+  HealthGoal,
+  MealLog,
+  MealPlanSlot,
+  ResolveResult,
+  WeeklyCheck,
+} from '../types'
 
 export type ResolveFoodBody = {
   text?: string
@@ -20,6 +30,17 @@ export type CreateMealBody = {
   meal_type?: string
 }
 
+export type UpsertGoalBody = {
+  height_cm?: number
+  weight_kg?: number
+  sex?: string
+  age_years?: number
+  activity_level?: string
+  weight_change_pct?: number
+  weeks?: number
+  daily_burn_target?: number
+}
+
 export const healthApi = {
   resolveFood: (body: ResolveFoodBody) =>
     apiClient.post<ResolveResult>('/api/v1/health/foods/resolve', body),
@@ -37,4 +58,28 @@ export const healthApi = {
     apiClient.get<DayMealSummary>(
       `/api/v1/health/check/today?date=${encodeURIComponent(date)}`,
     ),
+
+  weekly: (days = 7) =>
+    apiClient.get<WeeklyCheck>(`/api/v1/health/check/weekly?days=${days}`),
+
+  createBody: (body: { height_cm: number; weight_kg: number }) =>
+    apiClient.post<BodyMetric>('/api/v1/health/body-metrics', body),
+
+  latestBody: () => apiClient.get<BodyMetric>('/api/v1/health/body-metrics/latest'),
+
+  upsertGoal: (body: UpsertGoalBody) =>
+    apiClient.put<HealthGoal>('/api/v1/health/goals', body),
+
+  getGoal: () => apiClient.get<HealthGoal>('/api/v1/health/goals'),
+
+  mealPlan: () => apiClient.get<MealPlanSlot[]>('/api/v1/health/goals/meal-plan'),
+
+  createBurn: (body: { activity_name: string; duration_min: number; kcal_burned?: number }) =>
+    apiClient.post<BurnLog>('/api/v1/health/burns', body),
+
+  listBurns: (date: string) =>
+    apiClient.get<BurnLog[]>(`/api/v1/health/burns?date=${encodeURIComponent(date)}`),
+
+  deleteBurn: (id: string) =>
+    apiClient.delete<void>(`/api/v1/health/burns/${encodeURIComponent(id)}`),
 }

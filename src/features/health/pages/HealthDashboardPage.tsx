@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { GrgShell } from '@/shared/ui/GrgShell'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { useToast } from '@/shared/hooks/useToast'
@@ -7,6 +6,9 @@ import { useMeals } from '../hooks/useMeals'
 import { useTodaySummary } from '../hooks/useTodaySummary'
 import { TodaySummaryCard } from '../components/TodaySummaryCard'
 import { MealList } from '../components/MealList'
+import { MealPlanList } from '../components/MealPlanList'
+import { HealthNavLinks } from '../components/HealthNavLinks'
+import { Link } from 'react-router-dom'
 
 export function HealthDashboardPage() {
   const date = localISODate()
@@ -22,8 +24,7 @@ export function HealthDashboardPage() {
       brand="iVelox"
       nav={
         <>
-          <Link to="/">Portfolio</Link>
-          <Link to="/health/log">Log meal</Link>
+          <HealthNavLinks active="/health" />
           <button type="button" onClick={signOut}>
             Sign out
           </button>
@@ -32,7 +33,7 @@ export function HealthDashboardPage() {
       narrow
     >
       <p className="grg-eyebrow">Health</p>
-      <h1>Today&apos;s meals</h1>
+      <h1>Today</h1>
       <p className="grg-lead" style={{ marginBottom: '1.25rem' }}>
         {date}
       </p>
@@ -42,6 +43,14 @@ export function HealthDashboardPage() {
       )}
 
       <TodaySummaryCard summary={summary.data ?? emptySummary} />
+
+      <div className="grg-section-head">
+        <h2>Meal plan</h2>
+        <Link to="/health/goals" className="grg-btn grg-btn--ghost">
+          Edit goal
+        </Link>
+      </div>
+      <MealPlanList slots={summary.data?.meal_plan ?? []} />
 
       <div className="grg-section-head">
         <h2>Logged</h2>

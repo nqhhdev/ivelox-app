@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom'
 import { GrgShell } from '@/shared/ui/GrgShell'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { useMealLog } from '../hooks/useMealLog'
 import { MealLogForm } from '../components/MealLogForm'
 import { ResolvePreview } from '../components/ResolvePreview'
+import { HealthNavLinks } from '../components/HealthNavLinks'
 import type { FoodUnit } from '../types'
 
 export function MealLogPage() {
@@ -31,7 +31,7 @@ export function MealLogPage() {
       brand="iVelox"
       nav={
         <>
-          <Link to="/health">← Health</Link>
+          <HealthNavLinks active="/health/log" />
           <button type="button" onClick={signOut}>
             Sign out
           </button>
