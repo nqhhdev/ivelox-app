@@ -1,200 +1,167 @@
-import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { portfolioContent } from '@/features/portfolio/content'
-import { usePortfolioProjects } from '@/features/portfolio/hooks/usePortfolioProjects'
+import {
+  useGithubProfile,
+  usePortfolioProjects,
+} from '@/features/portfolio/hooks/usePortfolioProjects'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { usePlatformFeatures } from '@/shared/hooks/usePlatformFeatures'
-import { LogoMark } from '@/shared/ui/LogoMark'
-import { tokens } from '@/shared/ui/tokens'
+import './portfolio.css'
+
+const LANG_COLORS: Record<string, string> = {
+  TypeScript: '#3178c6',
+  JavaScript: '#f1e05a',
+  Java: '#b07219',
+  Go: '#00ADD8',
+  Python: '#3572A5',
+  Dart: '#00B4AB',
+  Kotlin: '#A97BFF',
+  Swift: '#F05138',
+  Rust: '#dea584',
+  HTML: '#e34c26',
+  CSS: '#563d7c',
+  Shell: '#89e051',
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  } catch {
+    return ''
+  }
+}
 
 export function PortfolioPage() {
-  const { data: projects = [], isLoading } = usePortfolioProjects()
+  const { data: profile, isLoading: profileLoading } = useGithubProfile()
+  const { data: projects = [], isLoading: reposLoading } = usePortfolioProjects()
   const { data: features } = usePlatformFeatures()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const signOut = useAuthStore((s) => s.signOut)
   const healthEnabled = features?.health.enabled !== false
 
+  const displayName = profile?.name ?? portfolioContent.githubUser
+  const blogHref = profile?.blog
+    ? (profile.blog.startsWith('http') ? profile.blog : `https://${profile.blog}`)
+    : null
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background:
-          'radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a4a 0%, transparent 50%), linear-gradient(165deg, #0c1218 0%, #121a22 45%, #0a1014 100%)',
-        fontFamily: tokens.font,
-        color: '#e8eef2',
-      }}
-    >
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '20px 28px',
-          maxWidth: 960,
-          margin: '0 auto',
-        }}
-      >
-        <LogoMark />
-        <nav style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+    <div className="gh-page">
+      <header className="gh-header">
+        <Link to="/" className="gh-brand">{portfolioContent.brand}</Link>
+        <nav className="gh-nav">
+          <a href={`https://github.com/${portfolioContent.githubUser}`} target="_blank" rel="noreferrer">
+            GitHub
+          </a>
           {healthEnabled && (
-            <Link
-              to={isAuthenticated ? '/health' : '/login'}
-              style={{
-                color: 'rgba(232,238,242,0.75)',
-                textDecoration: 'none',
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              {isAuthenticated ? 'Health' : 'Login'}
+            <Link to={isAuthenticated ? '/health' : '/login'}>
+              {isAuthenticated ? 'Health' : 'Sign in'}
             </Link>
           )}
           {isAuthenticated && (
-            <button
-              type="button"
-              onClick={signOut}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: 'rgba(232,238,242,0.55)',
-                borderRadius: 8,
-                padding: '6px 12px',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: tokens.font,
-              }}
-            >
-              Sign out
-            </button>
+            <button type="button" onClick={signOut}>Sign out</button>
           )}
         </nav>
       </header>
 
-      <main style={{ maxWidth: 960, margin: '0 auto', padding: '48px 28px 96px' }}>
-        <p
-          style={{
-            margin: '0 0 12px',
-            fontSize: clampBrandHint(),
-            fontWeight: 800,
-            letterSpacing: -1.2,
-            color: '#7ec8c8',
-            lineHeight: 1,
-          }}
-        >
-          {portfolioContent.brand}
-        </p>
-        <h1
-          style={{
-            margin: '0 0 16px',
-            fontSize: 'clamp(28px, 5vw, 44px)',
-            fontWeight: 800,
-            letterSpacing: -1.4,
-            lineHeight: 1.15,
-            maxWidth: 640,
-          }}
-        >
-          {portfolioContent.headline}
-        </h1>
-        <p
-          style={{
-            margin: '0 0 36px',
-            fontSize: 16,
-            color: 'rgba(232,238,242,0.6)',
-            lineHeight: 1.6,
-            maxWidth: 520,
-          }}
-        >
-          {portfolioContent.summary}
-        </p>
+      <div className="gh-layout">
+        <aside>
+          {profileLoading || !profile ? (
+            <>
+              <div className="gh-skeleton" style={{ width: '100%', maxWidth: 296, aspectRatio: '1', borderRadius: '50%' }} />
+              <div className="gh-skeleton" style={{ height: 28, width: '70%', marginTop: 16 }} />
+              <div className="gh-skeleton" style={{ height: 22, width: '40%', marginTop: 8 }} />
+            </>
+          ) : (
+            <>
+              <img
+                className="gh-avatar"
+                src={profile.avatarUrl}
+                alt={profile.login}
+                width={296}
+                height={296}
+              />
+              <h1 className="gh-profile-name">{displayName}</h1>
+              <p className="gh-profile-login">{profile.login}</p>
+              {profile.bio ? <p className="gh-bio">{profile.bio}</p> : null}
 
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 56 }}>
-          <a
-            href={`https://github.com/${portfolioContent.githubUser}`}
-            target="_blank"
-            rel="noreferrer"
-            style={ctaPrimary}
-          >
-            GitHub
-          </a>
-          {healthEnabled && (
-            <Link to={isAuthenticated ? '/health' : '/login'} style={ctaSecondary}>
-              {isAuthenticated ? 'Open Health' : 'Owner login'}
-            </Link>
+              <a
+                className="gh-btn"
+                href={profile.htmlUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View on GitHub
+              </a>
+
+              <div className="gh-counts">
+                <span><strong>{profile.followers}</strong> followers</span>
+                <span>·</span>
+                <span><strong>{profile.following}</strong> following</span>
+                <span>·</span>
+                <span><strong>{profile.publicRepos}</strong> repos</span>
+              </div>
+
+              <div className="gh-meta">
+                {profile.company ? <span>{profile.company}</span> : null}
+                {profile.location ? <span>{profile.location}</span> : null}
+                {blogHref ? (
+                  <a href={blogHref} target="_blank" rel="noreferrer">{profile.blog}</a>
+                ) : null}
+              </div>
+            </>
           )}
-        </div>
+        </aside>
 
-        <h2 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(232,238,242,0.4)' }}>
-          Projects
-        </h2>
-        <p style={{ margin: '0 0 24px', fontSize: 14, color: 'rgba(232,238,242,0.5)' }}>
-          Featured work plus recent public repos from @{portfolioContent.githubUser}.
-        </p>
+        <section>
+          <h2 className="gh-section-title">
+            Popular repositories
+          </h2>
 
-        {isLoading ? (
-          <p style={{ color: 'rgba(232,238,242,0.4)', fontSize: 14 }}>Loading projects…</p>
-        ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {projects.map((p) => (
-              <li key={p.id} style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                <a
-                  href={p.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: 'block',
-                    padding: '18px 0',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'baseline' }}>
-                    <span style={{ fontSize: 16, fontWeight: 700 }}>{p.name}</span>
-                    <span style={{ fontSize: 12, color: 'rgba(232,238,242,0.35)', fontFamily: tokens.mono }}>
-                      {p.language ?? '—'}
-                      {typeof p.stars === 'number' ? ` · ★${p.stars}` : ''}
-                    </span>
+          {reposLoading ? (
+            <ul className="gh-repo-grid">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <li key={i} className="gh-repo-card">
+                  <div className="gh-skeleton" style={{ height: 16, width: '50%' }} />
+                  <div className="gh-skeleton" style={{ height: 40, width: '100%', marginTop: 8 }} />
+                </li>
+              ))}
+            </ul>
+          ) : projects.length === 0 ? (
+            <p className="gh-muted">No public repositories yet.</p>
+          ) : (
+            <ul className="gh-repo-grid">
+              {projects.map((p) => (
+                <li key={p.id} className="gh-repo-card">
+                  <a className="gh-repo-name" href={p.url} target="_blank" rel="noreferrer">
+                    {p.name}
+                  </a>
+                  <p className="gh-repo-desc">
+                    {p.description || 'No description'}
+                  </p>
+                  <div className="gh-repo-footer">
+                    {p.language ? (
+                      <span>
+                        <span
+                          className="gh-lang-dot"
+                          style={{ background: LANG_COLORS[p.language] ?? '#8b949e' }}
+                        />
+                        {p.language}
+                      </span>
+                    ) : null}
+                    {p.stars > 0 ? <span>★ {p.stars}</span> : null}
+                    {p.forks > 0 ? <span>Forks {p.forks}</span> : null}
+                    <span>Updated {formatDate(p.updatedAt)}</span>
                   </div>
-                  {p.description ? (
-                    <p style={{ margin: '6px 0 0', fontSize: 14, color: 'rgba(232,238,242,0.5)', lineHeight: 1.45 }}>
-                      {p.description}
-                    </p>
-                  ) : null}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </div>
   )
-}
-
-function clampBrandHint() {
-  return 'clamp(40px, 8vw, 72px)'
-}
-
-const ctaPrimary: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  padding: '12px 20px',
-  borderRadius: 10,
-  background: '#7ec8c8',
-  color: '#0a1014',
-  fontWeight: 700,
-  fontSize: 14,
-  textDecoration: 'none',
-}
-
-const ctaSecondary: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  padding: '12px 20px',
-  borderRadius: 10,
-  background: 'transparent',
-  color: 'rgba(232,238,242,0.85)',
-  fontWeight: 700,
-  fontSize: 14,
-  textDecoration: 'none',
-  border: '1px solid rgba(255,255,255,0.18)',
 }

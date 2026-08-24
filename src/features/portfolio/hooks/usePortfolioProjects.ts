@@ -1,26 +1,61 @@
 import { useQuery } from '@tanstack/react-query'
-import { portfolioContent, type PortfolioProject } from '../content'
+import { portfolioContent, type GithubProfile, type PortfolioProject } from '../content'
 
-type GithubRepo = {
+type GithubUserResponse = {
+  login: string
+  name: string | null
+  bio: string | null
+  avatar_url: string
+  html_url: string
+  location: string | null
+  blog: string | null
+  company: string | null
+  public_repos: number
+  followers: number
+  following: number
+}
+
+type GithubRepoResponse = {
   id: number
   name: string
   description: string | null
   html_url: string
   language: string | null
   stargazers_count: number
+  forks_count: number
   fork: boolean
   archived: boolean
+  updated_at: string
+}
+
+async function fetchGithubProfile(user: string): Promise<GithubProfile> {
+  const res = await fetch(`https://api.github.com/users/${user}`, {
+    headers: { Accept: 'application/vnd.github+json' },
+  })
+  if (!res.ok) throw new Error('github profile fetch failed')
+  const u = (await res.json()) as GithubUserResponse
+  return {
+    login: u.login,
+    name: u.name,
+    bio: u.bio,
+    avatarUrl: u.avatar_url,
+    htmlUrl: u.html_url,
+    location: u.location,
+    blog: u.blog,
+    company: u.company,
+    publicRepos: u.public_repos,
+    followers: u.followers,
+    following: u.following,
+  }
 }
 
 async function fetchGithubRepos(user: string): Promise<PortfolioProject[]> {
   const res = await fetch(
-    `https://api.github.com/users/${user}/repos?sort=updated&per_page=12`,
+    `https://api.github.com/users/${user}/repos?sort=updated&per_page=30&type=owner`,
     { headers: { Accept: 'application/vnd.github+json' } },
   )
-  if (!res.ok) {
-    throw new Error('github fetch failed')
-  }
-  const repos = (await res.json()) as GithubRepo[]
+  if (!res.ok) throw new Error('github repos fetch failed')
+  const repos = (await res.json()) as GithubRepoResponse[]
   return repos
     .filter((r) => !r.fork && !r.archived)
     .map((r) => ({
@@ -30,31 +65,23 @@ async function fetchGithubRepos(user: string): Promise<PortfolioProject[]> {
       url: r.html_url,
       language: r.language,
       stars: r.stargazers_count,
-      source: 'github' as const,
+      forks: r.forks_count,
+      updatedAt: r.updated_at,
     }))
 }
 
-function mergeProjects(github: PortfolioProject[]): PortfolioProject[] {
-  const manual: PortfolioProject[] = portfolioContent.featured.map((p) => ({
-    ...p,
-    source: 'manual' as const,
-  }))
-  const manualNames = new Set(manual.map((p) => p.name.toLowerCase()))
-  const fromGithub = github.filter((p) => !manualNames.has(p.name.toLowerCase()))
-  return [...manual, ...fromGithub]
+export function useGithubProfile() {
+  return useQuery({
+    queryKey: ['portfolio', 'profile', portfolioContent.githubUser],
+    queryFn: () => fetchGithubProfile(portfolioContent.githubUser),
+    staleTime: 1000 * 60 * 30,
+  })
 }
 
 export function usePortfolioProjects() {
   return useQuery({
-    queryKey: ['portfolio', 'github', portfolioContent.githubUser],
-    queryFn: async () => {
-      try {
-        const github = await fetchGithubRepos(portfolioContent.githubUser)
-        return mergeProjects(github)
-      } catch {
-        return mergeProjects([])
-      }
-    },
+    queryKey: ['portfolio', 'repos', portfolioContent.githubUser],
+    queryFn: () => fetchGithubRepos(portfolioContent.githubUser),
     staleTime: 1000 * 60 * 30,
   })
 }
