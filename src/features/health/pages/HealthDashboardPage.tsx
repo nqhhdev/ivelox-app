@@ -128,32 +128,31 @@ export function HealthDashboardPage() {
         onLogBurn={() => setPanel('burns')}
         onGoals={() => setPanel('goals')}
         onCloseDay={() => closeMut.mutate()}
-      />
-
-      <div className="med-dash" style={{ paddingTop: 0 }}>
-        <div className="med-card" style={{ maxWidth: 1100, margin: '0 auto 1.5rem' }}>
-          <p className="med-kicker">{date} · Meal targets & logs</p>
-          <MealPlanList
-            slots={data.meal_plan ?? []}
-            onStatus={(meal_type, status) => slotMut.mutate({ meal_type, status })}
-          />
-          <div style={{ height: 12 }} />
-          {meals.list.isLoading ? (
-            <p className="med-muted">Loading meals…</p>
-          ) : (
-            <MealList
-              meals={meals.list.data ?? []}
-              deletingId={meals.remove.isPending ? meals.remove.variables : null}
-              onDelete={(id) => {
-                if (!window.confirm('Delete this meal?')) return
-                meals.remove.mutate(id, {
-                  onError: (e) => toast.error(e, 'Could not delete meal.'),
-                })
-              }}
+        mealsSlot={
+          <>
+            <p className="med-kicker">{date} · Meals</p>
+            <MealPlanList
+              slots={data.meal_plan ?? []}
+              onStatus={(meal_type, status) => slotMut.mutate({ meal_type, status })}
             />
-          )}
-        </div>
-      </div>
+            <div style={{ height: 10 }} />
+            {meals.list.isLoading ? (
+              <p className="med-muted">Loading meals…</p>
+            ) : (
+              <MealList
+                meals={meals.list.data ?? []}
+                deletingId={meals.remove.isPending ? meals.remove.variables : null}
+                onDelete={(id) => {
+                  if (!window.confirm('Delete this meal?')) return
+                  meals.remove.mutate(id, {
+                    onError: (e) => toast.error(e, 'Could not delete meal.'),
+                  })
+                }}
+              />
+            )}
+          </>
+        }
+      />
 
       {panel === 'log' && (
         <BoardModal title="Log meal" onClose={() => setPanel(null)}>

@@ -1,10 +1,11 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { healthApi } from '../api/healthApi'
 import type { DayMealSummary, HealthGoal } from '../types'
 import {
   estimateBodyFatPct,
   healthScore,
+  JOINTS,
   useWebGLOk,
   visceralFatScore,
   type AnatomyLayer,
@@ -20,15 +21,22 @@ const LAYER_OPTS: { id: AnatomyLayer; label: string }[] = [
   { id: 'skin', label: 'Skin' },
   { id: 'muscles', label: 'Muscles' },
   { id: 'skeleton', label: 'Skeleton' },
-  { id: 'vessels', label: 'Blood Vessels' },
+  { id: 'vessels', label: 'Blood vessels' },
   { id: 'organs', label: 'Organs' },
-  { id: 'visceral_fat', label: 'Visceral Fat' },
+  { id: 'visceral_fat', label: 'Visceral fat' },
   { id: 'nerves', label: 'Nerves' },
+]
+
+const MODE_OPTS: { id: AnatomyLayer; label: string }[] = [
+  { id: 'vessels', label: 'Blood' },
+  { id: 'visceral_fat', label: 'Fat' },
+  { id: 'skeleton', label: 'Bone' },
+  { id: 'muscles', label: 'Muscle' },
 ]
 
 function statusClass(status: string): string {
   const s = status.toLowerCase()
-  if (s.includes('not')) return 'med-status--muted'
+  if (s.includes('not') || s === '—') return 'med-status--muted'
   if (s.includes('mod')) return 'med-status--moderate'
   if (s.includes('high') || s.includes('watch')) return 'med-status--high'
   if (s.includes('good') || s.includes('low') || s.includes('fair') || s.includes('normal')) {
@@ -71,6 +79,7 @@ export function MedicalAnalyticsDashboard({
   onLogBurn,
   onGoals,
   onCloseDay,
+  mealsSlot,
 }: {
   summary: DayMealSummary
   goal?: HealthGoal | null
@@ -80,11 +89,13 @@ export function MedicalAnalyticsDashboard({
   onLogBurn: () => void
   onGoals: () => void
   onCloseDay: () => void
+  mealsSlot?: ReactNode
 }) {
   const webgl = useWebGLOk()
   const [section, setSection] = useState<Section>('anatomy')
   const [layer, setLayer] = useState<AnatomyLayer>('vessels')
   const [picked, setPicked] = useState<{ name: string; type: string } | null>(null)
+  const [activeJoint, setActiveJoint] = useState<string | null>('knee')
   const [weight, setWeight] = useState(
     summary.weight_kg_today != null ? String(summary.weight_kg_today) : '',
   )
@@ -120,26 +131,36 @@ export function MedicalAnalyticsDashboard({
           : t.layer === (layer === 'skeleton' || layer === 'nerves' ? 'bone' : 'fat'),
       )?.text
 
+  const joint = JOINTS.find((j) => j.id === activeJoint) ?? JOINTS[2]
+  const showJoints = section === 'joints'
+
+  const setSectionAndLayer = (id: Section) => {
+    setSection(id)
+    if (id === 'blood') setLayer('vessels')
+    if (id === 'fat') setLayer('visceral_fat')
+    if (id === 'bones' || id === 'joints') setLayer('skeleton')
+  }
+
   return (
     <div className="med-dash">
       <header className="med-top">
         <div>
-          <p className="med-kicker">iVelox Health</p>
-          <h1>BODY 3D MEDICAL HEALTH ANALYTICS</h1>
+          <p className="med-kicker">Health · body atlas</p>
+          <h1>Body analytics</h1>
         </div>
         <div className="med-top__actions">
-          <button type="button" className="med-btn" onClick={onLogMeal}>
+          <button type="button" className="grg-btn" onClick={onLogMeal}>
             + Log meal
           </button>
-          <button type="button" className="med-btn med-btn--ghost" onClick={onLogBurn}>
+          <button type="button" className="grg-btn grg-btn--ghost" onClick={onLogBurn}>
             Log burn
           </button>
-          <button type="button" className="med-btn med-btn--ghost" onClick={onGoals}>
+          <button type="button" className="grg-btn grg-btn--ghost" onClick={onGoals}>
             Goals
           </button>
           <button
             type="button"
-            className="med-btn med-btn--ghost"
+            className="grg-btn grg-btn--quiet"
             disabled={summary.day_closed}
             onClick={onCloseDay}
           >
@@ -148,23 +169,19 @@ export function MedicalAnalyticsDashboard({
         </div>
       </header>
 
-      <div className="med-grid">
-        {/* LEFT */}
-        <aside className="med-side">
-          <div className="med-card">
-            <p className="med-kicker">Profile</p>
-            <div className="med-profile">
-              <div className="med-avatar">IV</div>
-              <div>
-                <strong>Owner</strong>
-                <div className="med-muted">
-                  Age {goal?.age_years ?? '—'} · {goal?.sex ?? '—'}
-                </div>
+      <div className="med-board">
+        <aside className="med-rail">
+          <div className="med-profile">
+            <div className="med-avatar">IV</div>
+            <div>
+              <strong>Owner</strong>
+              <div className="med-muted">
+                Age {goal?.age_years ?? '—'} · {goal?.sex ?? '—'}
               </div>
             </div>
           </div>
 
-          <nav className="med-card med-nav">
+          <nav className="med-nav">
             {(
               [
                 ['overview', 'Overview'],
@@ -179,25 +196,14 @@ export function MedicalAnalyticsDashboard({
                 key={id}
                 type="button"
                 className={section === id ? 'is-active' : ''}
-                onClick={() => setSection(id)}
+                onClick={() => setSectionAndLayer(id)}
               >
                 {label}
               </button>
             ))}
           </nav>
 
-          <div className="med-card">
-            <p className="med-kicker">Scan summary</p>
-            <div className="med-muted" style={{ fontSize: '0.78rem', lineHeight: 1.5 }}>
-              Source: daily logs + goals
-              <br />
-              Type: Full body analytics (estimated)
-              <br />
-              Device: — (not linked)
-            </div>
-          </div>
-
-          <div className="med-card">
+          <div className="med-rail__block">
             <p className="med-kicker">Layers</p>
             <div className="med-layers">
               {LAYER_OPTS.map((l) => (
@@ -215,32 +221,22 @@ export function MedicalAnalyticsDashboard({
                 </label>
               ))}
             </div>
-            <div className="med-legend">
-              <span><i style={{ background: '#c23b3b' }} /> Arteries</span>
-              <span><i style={{ background: '#3a6cff' }} /> Veins</span>
-              <span><i style={{ background: '#e6d84a' }} /> Nerves</span>
-              <span><i style={{ background: '#e8e2d6' }} /> Bone</span>
-            </div>
           </div>
         </aside>
 
-        {/* CENTER */}
         <section className="med-stage">
           <div className="med-stage__modes">
-            {(['vessels', 'visceral_fat', 'skeleton', 'muscles'] as AnatomyLayer[]).map((m) => (
+            {MODE_OPTS.map((m) => (
               <button
-                key={m}
+                key={m.id}
                 type="button"
-                className={layer === m ? 'is-active' : ''}
-                onClick={() => setLayer(m)}
+                className={layer === m.id ? 'is-active' : ''}
+                onClick={() => {
+                  setLayer(m.id)
+                  setSection('anatomy')
+                }}
               >
-                {m === 'vessels'
-                  ? 'Blood Flow'
-                  : m === 'visceral_fat'
-                    ? 'Visceral Fat'
-                    : m === 'skeleton'
-                      ? 'Skeleton'
-                      : 'Muscles'}
+                {m.label}
               </button>
             ))}
           </div>
@@ -248,38 +244,118 @@ export function MedicalAnalyticsDashboard({
           <div className="med-viewport">
             {webgl ? (
               <Suspense fallback={<div className="med-loading">Loading 3D…</div>}>
-                <AnatomyCanvas layer={layer} onPick={(name, type) => setPicked({ name, type })} />
+                <AnatomyCanvas
+                  layer={layer}
+                  showJoints={showJoints}
+                  activeJointId={activeJoint}
+                  onPick={(name, type) => setPicked({ name, type })}
+                  onJointSelect={setActiveJoint}
+                />
               </Suspense>
             ) : (
               <div className="med-loading">WebGL unavailable — use a desktop browser.</div>
             )}
             <div className="med-viewport__hint">
-              Drag to rotate · Scroll to zoom · Right-drag to pan · Click structure to inspect
+              Drag to rotate · scroll to zoom
+              {showJoints ? ' · tap a ring for joint detail' : ''}
             </div>
           </div>
 
-          {(picked || tip) && (
-            <div className="med-card med-inspect">
-              <p className="med-kicker">{picked?.name || 'Region tip'}</p>
-              <p className="med-muted" style={{ margin: 0 }}>
-                {picked ? `Type: ${picked.type}` : null}
-                {tip ? ` — ${tip}` : null}
-              </p>
-              <p className="med-fineprint">
-                Educational model (CC BY-SA, Z-Anatomy / hpfrei). Not a clinical scan.
-              </p>
-            </div>
+          {(picked || tip) && !showJoints && (
+            <p className="med-inspect-line">
+              <span>{picked?.name ?? 'Tip'}</span>
+              {picked ? ` · ${picked.type}` : ''}
+              {tip ? ` — ${tip}` : ''}
+            </p>
           )}
         </section>
 
-        {/* RIGHT */}
-        <aside className="med-side med-side--analytics">
-          {(section === 'overview' || section === 'blood' || section === 'anatomy') && (
-            <div className="med-card">
-              <p className="med-kicker">Blood metrics</p>
-              <div className="med-muted med-fineprint" style={{ marginBottom: 8 }}>
-                Lab values not linked yet
+        <aside className="med-analytics">
+          {section === 'overview' && (
+            <>
+              <div className="med-block">
+                <p className="med-kicker">Today</p>
+                <div className="med-stat-row">
+                  <div>
+                    <div className="med-stat-val">{Math.round(summary.eaten_kcal)}</div>
+                    <div className="med-muted">Kcal</div>
+                  </div>
+                  <div>
+                    <div className="med-stat-val">
+                      {summary.remaining_kcal == null ? '—' : Math.round(summary.remaining_kcal)}
+                    </div>
+                    <div className="med-muted">Left</div>
+                  </div>
+                  <div>
+                    <div className="med-stat-val">{Math.round(summary.protein_g)}</div>
+                    <div className="med-muted">Protein</div>
+                  </div>
+                </div>
               </div>
+              <div className="med-block med-block--score">
+                <p className="med-kicker">Health score</p>
+                <div className="med-ring med-ring--lg" style={{ ['--p' as string]: `${score}%` }}>
+                  <span>{score}</span>
+                </div>
+                <div className={`med-status ${statusClass(scoreLabel)}`}>{scoreLabel}</div>
+              </div>
+              <div className="med-block">
+                <p className="med-kicker">Visceral fat (est.)</p>
+                <div className="med-scoreline">
+                  <strong>{vf}/100</strong>
+                  <span className={`med-status ${statusClass(vfLabel)}`}>{vfLabel}</span>
+                </div>
+                <div className="med-bar">
+                  <div style={{ width: `${vf}%` }} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {section === 'anatomy' && (
+            <>
+              <div className="med-block">
+                <p className="med-kicker">Layer focus</p>
+                <p className="med-muted" style={{ margin: 0, fontSize: '0.82rem', lineHeight: 1.45 }}>
+                  {tip ?? 'Rotate the model and switch layers. Educational CC BY-SA anatomy — not a clinical scan.'}
+                </p>
+              </div>
+              <div className="med-block">
+                <p className="med-kicker">Today nutrition</p>
+                <div className="med-stat-row">
+                  <div>
+                    <div className="med-stat-val">{Math.round(summary.eaten_kcal)}</div>
+                    <div className="med-muted">Kcal</div>
+                  </div>
+                  <div>
+                    <div className="med-stat-val">
+                      {summary.remaining_kcal == null ? '—' : Math.round(summary.remaining_kcal)}
+                    </div>
+                    <div className="med-muted">Left</div>
+                  </div>
+                  <div>
+                    <div className="med-stat-val">
+                      {Math.round(summary.protein_g)}
+                      {summary.protein_g_target != null ? `/${summary.protein_g_target}` : ''}
+                    </div>
+                    <div className="med-muted">Protein</div>
+                  </div>
+                </div>
+              </div>
+              <div className="med-block med-block--score">
+                <p className="med-kicker">Score</p>
+                <div className="med-ring med-ring--lg" style={{ ['--p' as string]: `${score}%` }}>
+                  <span>{score}</span>
+                </div>
+                <div className={`med-status ${statusClass(scoreLabel)}`}>{scoreLabel}</div>
+              </div>
+            </>
+          )}
+
+          {section === 'blood' && (
+            <div className="med-block">
+              <p className="med-kicker">Blood metrics</p>
+              <p className="med-fineprint">Lab values not linked yet</p>
               <div className="med-metric-list">
                 <Ring value={null} label="Hemoglobin" status="Not linked" />
                 <Ring value={null} label="RBC" status="Not linked" />
@@ -291,9 +367,9 @@ export function MedicalAnalyticsDashboard({
             </div>
           )}
 
-          {(section === 'overview' || section === 'fat' || section === 'anatomy') && (
-            <div className="med-card">
-              <p className="med-kicker">Visceral fat analysis</p>
+          {section === 'fat' && (
+            <div className="med-block">
+              <p className="med-kicker">Visceral fat</p>
               <div className="med-scoreline">
                 <strong>{vf}/100</strong>
                 <span className={`med-status ${statusClass(vfLabel)}`}>{vfLabel}</span>
@@ -301,10 +377,10 @@ export function MedicalAnalyticsDashboard({
               <div className="med-bar">
                 <div style={{ width: `${vf}%` }} />
               </div>
-              <div className="med-muted" style={{ fontSize: '0.78rem', marginTop: 8 }}>
-                Estimated from BMI {summary.bmi ?? '—'}
-                {ebf != null ? ` · eBF ${ebf}%` : ''} (Deurenberg-style). Not imaging.
-              </div>
+              <p className="med-muted" style={{ fontSize: '0.78rem', marginTop: 8 }}>
+                From BMI {summary.bmi ?? '—'}
+                {ebf != null ? ` · eBF ${ebf}%` : ''}. Not imaging.
+              </p>
               <div className="med-stat-row">
                 <div>
                   <div className="med-stat-val">{summary.weight_kg_today ?? '—'}</div>
@@ -324,87 +400,62 @@ export function MedicalAnalyticsDashboard({
                 }}
               >
                 <input
-                  className="med-input"
+                  className="grg-input"
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
                   placeholder="Today's weight"
                   inputMode="decimal"
                 />
-                <button type="submit" className="med-btn" disabled={saving}>
+                <button type="submit" className="grg-btn" disabled={saving}>
                   {saving ? '…' : 'Update'}
                 </button>
               </form>
             </div>
           )}
 
-          {(section === 'overview' || section === 'bones' || section === 'anatomy') && (
-            <div className="med-card">
+          {section === 'bones' && (
+            <div className="med-block">
               <p className="med-kicker">Bone health</p>
               <div className="med-metric-list">
                 <Ring value={null} label="T-score" status="Not linked" />
                 <Ring value={null} label="Calcium / P" status="Not linked" />
               </div>
-              <div className="med-muted" style={{ fontSize: '0.78rem' }}>
-                Fracture risk: — · Spine alignment: — (DEXA not connected)
-              </div>
+              <p className="med-muted" style={{ fontSize: '0.78rem' }}>
+                Fracture risk: — · DEXA not connected
+              </p>
             </div>
           )}
 
-          {(section === 'overview' || section === 'joints' || section === 'anatomy') && (
-            <div className="med-card">
-              <p className="med-kicker">Joint health</p>
-              <div className="med-metric-list">
-                <Ring value={null} label="Inflammation mg/L" status="Not linked" />
-                <Ring value={null} label="Mobility score" status="—" />
+          {section === 'joints' && (
+            <div className="med-block">
+              <p className="med-kicker">Joint · {joint.label}</p>
+              <div className="med-joint-list">
+                {JOINTS.map((j) => (
+                  <button
+                    key={j.id}
+                    type="button"
+                    className={activeJoint === j.id ? 'is-active' : ''}
+                    onClick={() => setActiveJoint(j.id)}
+                  >
+                    {j.label}
+                  </button>
+                ))}
               </div>
-              <div className="med-muted" style={{ fontSize: '0.78rem' }}>
-                Pain risk: — · Tap joint markers on the model for placeholders.
+              <div className="med-metric-list" style={{ marginTop: 10 }}>
+                <Ring value={null} label="Mobility" status="—" />
+                <Ring value={null} label="Inflammation" status="Not linked" />
               </div>
+              <p className="med-fineprint">Wearables / labs not linked — markers are placeholders.</p>
             </div>
           )}
 
-          <div className="med-card">
-            <p className="med-kicker">Today nutrition</p>
-            <div className="med-stat-row">
-              <div>
-                <div className="med-stat-val">{Math.round(summary.eaten_kcal)}</div>
-                <div className="med-muted">Kcal eaten</div>
-              </div>
-              <div>
-                <div className="med-stat-val">
-                  {summary.remaining_kcal == null ? '—' : Math.round(summary.remaining_kcal)}
-                </div>
-                <div className="med-muted">Left</div>
-              </div>
-              <div>
-                <div className="med-stat-val">
-                  {Math.round(summary.protein_g)}
-                  {summary.protein_g_target != null ? `/${summary.protein_g_target}` : ''}
-                </div>
-                <div className="med-muted">Protein</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="med-card med-card--score">
-            <p className="med-kicker">Overall health score</p>
-            <div className="med-ring med-ring--lg" style={{ ['--p' as string]: `${score}%` }}>
-              <span>{score}</span>
-            </div>
-            <div className={`med-status ${statusClass(scoreLabel)}`}>{scoreLabel}</div>
-            <div className="med-fineprint">From kcal adherence, protein, and activity — not a diagnosis.</div>
-          </div>
-
-          <div className="med-bottom-actions">
-            <button type="button" className="med-btn med-btn--ghost" disabled>
-              Export data
-            </button>
-            <button type="button" className="med-btn med-btn--ghost" disabled>
-              Generate report
-            </button>
-          </div>
+          <p className="med-fineprint med-attrib">
+            Model: Z-Anatomy / hpfrei · CC BY-SA 4.0
+          </p>
         </aside>
       </div>
+
+      {mealsSlot ? <div className="med-meals">{mealsSlot}</div> : null}
     </div>
   )
 }

@@ -1,12 +1,12 @@
-import { Suspense, useEffect, useMemo, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei'
-import { useGLTF } from '@react-three/drei'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Canvas, useThree } from '@react-three/fiber'
+import { Billboard, OrbitControls, useGLTF, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
-import type { AnatomyLayer } from './bodyMetrics'
+import { JOINTS, type AnatomyLayer, type JointCallout } from './bodyMetrics'
 
-export type { AnatomyLayer } from './bodyMetrics'
+export type { AnatomyLayer, JointCallout } from './bodyMetrics'
+export { JOINTS } from './bodyMetrics'
 export {
   estimateBodyFatPct,
   visceralFatScore,
@@ -14,105 +14,155 @@ export {
   useWebGLOk,
 } from './bodyMetrics'
 
-export type JointCallout = {
-  id: string
-  label: string
-  position: [number, number, number]
-  mobility: number | null
-  inflammation: 'Low' | 'Moderate' | 'High' | '—'
+const LAYER_COLOR = {
+  muscle_vessels: new THREE.Color('#9a3a3a'),
+  muscle_fat: new THREE.Color('#b8965a'),
+  muscle_default: new THREE.Color('#8f4545'),
+  muscle_skin: new THREE.Color('#a88870'),
+  bone: new THREE.Color('#d8d2c6'),
+  nerve: new THREE.Color('#c4b84a'),
+  accent: new THREE.Color('#75d18c'),
 }
-
-const JOINTS: JointCallout[] = [
-  { id: 'shoulder', label: 'Shoulder', position: [0.28, 1.25, 0.05], mobility: null, inflammation: '—' },
-  { id: 'elbow', label: 'Elbow', position: [0.42, 0.95, 0.02], mobility: null, inflammation: '—' },
-  { id: 'wrist', label: 'Wrist', position: [0.48, 0.62, 0.02], mobility: null, inflammation: '—' },
-  { id: 'hip', label: 'Hip', position: [0.14, 0.72, 0.04], mobility: null, inflammation: '—' },
-  { id: 'knee', label: 'Knee', position: [0.14, 0.38, 0.06], mobility: null, inflammation: '—' },
-  { id: 'ankle', label: 'Ankle', position: [0.12, 0.08, 0.04], mobility: null, inflammation: '—' },
-]
 
 function meshType(obj: THREE.Object3D): string {
   const t = (obj.userData?.type as string | undefined)?.toLowerCase()
   if (t) return t
   const n = obj.name.toLowerCase()
-  if (n.includes('bone') || n.includes('skeleton') || n.includes('vertebra') || n.includes('skull')) return 'bone'
+  if (n.includes('bone') || n.includes('skeleton') || n.includes('vertebra') || n.includes('skull')) {
+    return 'bone'
+  }
   if (n.includes('muscle') || n.includes('muscul')) return 'muscle'
   return 'other'
 }
 
-function asStd(mat: THREE.Material | THREE.Material[]): THREE.MeshStandardMaterial | null {
-  const m = Array.isArray(mat) ? mat[0] : mat
-  if (!m || !(m as THREE.MeshStandardMaterial).isMeshStandardMaterial) return null
-  return m as THREE.MeshStandardMaterial
+type MeshPack = {
+  mesh: THREE.Mesh
+  type: string
+  mat: THREE.MeshStandardMaterial
 }
 
-function applyLayerMaterial(
-  mesh: THREE.Mesh,
-  layer: AnatomyLayer,
-  type: string,
-  selected: boolean,
-) {
-  const mat = asStd(mesh.material)
-  if (!mat) return
+function buildPacks(root: THREE.Object3D): MeshPack[] {
+  const packs: MeshPack[] = []
+  root.traverse((o) => {
+    if (!(o as THREE.Mesh).isMesh) return
+    const mesh = o as THREE.Mesh
+    mesh.castShadow = false
+    mesh.receiveShadow = false
+    mesh.frustumCulled = true
 
-  mat.transparent = true
-  mat.depthWrite = layer !== 'skin'
-  mat.wireframe = false
-  mat.emissiveIntensity = 0
+    let mat: THREE.MeshStandardMaterial
+    if (Array.isArray(mesh.material)) {
+      const first = mesh.material[0]
+      mat =
+        first && (first as THREE.MeshStandardMaterial).isMeshStandardMaterial
+          ? (first as THREE.MeshStandardMaterial).clone()
+          : new THREE.MeshStandardMaterial({ color: '#888' })
+      mesh.material = mat
+    } else if (mesh.material && (mesh.material as THREE.MeshStandardMaterial).isMeshStandardMaterial) {
+      mat = (mesh.material as THREE.MeshStandardMaterial).clone()
+      mesh.material = mat
+    } else {
+      mat = new THREE.MeshStandardMaterial({ color: '#888' })
+      mesh.material = mat
+    }
 
-  if (selected) {
-    mat.emissive = new THREE.Color('#3ecfff')
-    mat.emissiveIntensity = 0.55
-    mat.opacity = 1
-    mat.needsUpdate = true
-    return
-  }
+    mat.transparent = true
+    mat.metalness = 0.05
+    mat.roughness = 0.72
+    packs.push({ mesh, type: meshType(mesh), mat })
+  })
+  return packs
+}
 
-  if (type === 'muscle') {
-    mesh.visible =
-      layer === 'skin' ||
-      layer === 'muscles' ||
-      layer === 'vessels' ||
-      layer === 'visceral_fat' ||
-      layer === 'organs'
-    if (layer === 'vessels') {
-      mat.color = new THREE.Color('#c23b3b')
-      mat.emissive = new THREE.Color('#7a1010')
-      mat.emissiveIntensity = 0.35
-      mat.opacity = 0.55
-    } else if (layer === 'visceral_fat') {
-      mat.color = new THREE.Color('#c4a35a')
+function applyLayer(packs: MeshPack[], layer: AnatomyLayer, selectedName: string | null) {
+  for (const { mesh, type, mat } of packs) {
+    const selected = selectedName != null && mesh.name === selectedName
+
+    if (type === 'muscle') {
+      mesh.visible =
+        layer === 'skin' ||
+        layer === 'muscles' ||
+        layer === 'vessels' ||
+        layer === 'visceral_fat' ||
+        layer === 'organs'
+      if (layer === 'vessels') {
+        mat.color.copy(LAYER_COLOR.muscle_vessels)
+        mat.emissive.set('#4a1010')
+        mat.emissiveIntensity = 0.22
+        mat.opacity = 0.5
+        mat.depthWrite = false
+      } else if (layer === 'visceral_fat') {
+        mat.color.copy(LAYER_COLOR.muscle_fat)
+        mat.emissive.set('#000000')
+        mat.emissiveIntensity = 0
+        mat.opacity = 0.32
+        mat.depthWrite = false
+      } else if (layer === 'muscles') {
+        mat.color.copy(LAYER_COLOR.muscle_default)
+        mat.emissive.set('#000000')
+        mat.emissiveIntensity = 0
+        mat.opacity = 0.9
+        mat.depthWrite = true
+      } else if (layer === 'skin') {
+        mat.color.copy(LAYER_COLOR.muscle_skin)
+        mat.emissive.set('#000000')
+        mat.emissiveIntensity = 0
+        mat.opacity = 0.2
+        mat.depthWrite = false
+      } else {
+        mat.opacity = 0.14
+        mat.emissiveIntensity = 0
+        mat.depthWrite = false
+      }
+    } else if (type === 'bone') {
+      mesh.visible = layer === 'skeleton' || layer === 'skin' || layer === 'nerves'
+      if (layer === 'skeleton') {
+        mat.color.copy(LAYER_COLOR.bone)
+        mat.emissive.set('#0a1810')
+        mat.emissiveIntensity = 0.06
+        mat.opacity = 0.95
+        mat.depthWrite = true
+      } else if (layer === 'nerves') {
+        mat.color.copy(LAYER_COLOR.nerve)
+        mat.emissive.set('#5a5010')
+        mat.emissiveIntensity = 0.18
+        mat.opacity = 0.65
+        mat.depthWrite = false
+      } else {
+        mat.opacity = layer === 'skin' ? 0.1 : 0.18
+        mat.emissiveIntensity = 0
+        mat.depthWrite = false
+      }
+    } else {
+      mesh.visible = layer === 'organs' || layer === 'skin'
       mat.opacity = 0.35
-    } else if (layer === 'muscles') {
-      mat.color = new THREE.Color('#b04a4a')
-      mat.opacity = 0.92
-    } else if (layer === 'skin') {
-      mat.color = new THREE.Color('#c4a18a')
-      mat.opacity = 0.22
-    } else {
-      mat.opacity = 0.15
+      mat.depthWrite = false
     }
-  } else if (type === 'bone') {
-    mesh.visible = layer === 'skeleton' || layer === 'skin' || layer === 'nerves'
-    if (layer === 'skeleton') {
-      mat.color = new THREE.Color('#e8e2d6')
-      mat.opacity = 0.95
-      mat.emissive = new THREE.Color('#1a3040')
-      mat.emissiveIntensity = 0.08
-    } else if (layer === 'nerves') {
-      mat.color = new THREE.Color('#e6d84a')
-      mat.emissive = new THREE.Color('#8a7a10')
-      mat.emissiveIntensity = 0.25
-      mat.opacity = 0.7
-    } else {
-      mat.opacity = layer === 'skin' ? 0.12 : 0.2
-    }
-  } else {
-    mesh.visible = layer === 'organs' || layer === 'skin'
-    mat.opacity = 0.4
-  }
 
-  mat.needsUpdate = true
+    if (selected && mesh.visible) {
+      mat.emissive.copy(LAYER_COLOR.accent)
+      mat.emissiveIntensity = 0.45
+      mat.opacity = Math.max(mat.opacity, 0.85)
+    }
+  }
+}
+
+function InvalidateOnChange({
+  layer,
+  selectedName,
+  showJoints,
+  activeJointId,
+}: {
+  layer: AnatomyLayer
+  selectedName: string | null
+  showJoints?: boolean
+  activeJointId?: string | null
+}) {
+  const invalidate = useThree((s) => s.invalidate)
+  useLayoutEffect(() => {
+    invalidate()
+  }, [invalidate, layer, selectedName, showJoints, activeJointId])
+  return null
 }
 
 function AnatomyModel({
@@ -124,37 +174,19 @@ function AnatomyModel({
   selectedName: string | null
   onSelect: (name: string, type: string) => void
 }) {
-  // DRACO decoder from Google CDN (model is DRACO-compressed)
   const { scene } = useGLTF('/models/body.glb', true)
+  const packsRef = useRef<MeshPack[] | null>(null)
 
   const root = useMemo(() => {
     const clone = scene.clone(true)
-    clone.traverse((o) => {
-      if ((o as THREE.Mesh).isMesh) {
-        const m = o as THREE.Mesh
-        m.castShadow = true
-        m.receiveShadow = true
-        if (Array.isArray(m.material)) {
-          m.material = m.material.map((x) => (x as THREE.Material).clone())
-        } else if (m.material) {
-          m.material = (m.material as THREE.Material).clone()
-        }
-      }
-    })
-    // Normalize orientation / scale for our camera
-    clone.scale.setScalar(1)
-    clone.rotation.set(0, 0, 0)
+    packsRef.current = buildPacks(clone)
     clone.position.set(0, -0.05, 0)
     return clone
   }, [scene])
 
   useEffect(() => {
-    root.traverse((o) => {
-      if (!(o as THREE.Mesh).isMesh) return
-      const mesh = o as THREE.Mesh
-      const type = meshType(mesh)
-      applyLayerMaterial(mesh, layer, type, selectedName === mesh.name)
-    })
+    if (!packsRef.current) return
+    applyLayer(packsRef.current, layer, selectedName)
   }, [root, layer, selectedName])
 
   return (
@@ -162,14 +194,7 @@ function AnatomyModel({
       object={root}
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation()
-        const obj = e.object
-        onSelect(obj.name || 'structure', meshType(obj))
-      }}
-      onPointerOver={() => {
-        document.body.style.cursor = 'pointer'
-      }}
-      onPointerOut={() => {
-        document.body.style.cursor = 'auto'
+        onSelect(e.object.name || 'structure', meshType(e.object))
       }}
     />
   )
@@ -185,25 +210,32 @@ function JointMarker({
   onClick: () => void
 }) {
   return (
-    <group position={joint.position}>
-      <mesh onClick={(e) => { e.stopPropagation(); onClick() }}>
-        <sphereGeometry args={[0.028, 16, 16]} />
-        <meshStandardMaterial
-          color={active ? '#5ce1ff' : '#3aa0ff'}
-          emissive={active ? '#5ce1ff' : '#1a6cff'}
-          emissiveIntensity={active ? 0.9 : 0.45}
+    <Billboard position={joint.position} follow>
+      <mesh
+        onClick={(e) => {
+          e.stopPropagation()
+          onClick()
+        }}
+      >
+        <ringGeometry args={[0.016, 0.024, 20]} />
+        <meshBasicMaterial
+          color={active ? '#75d18c' : '#3a8f55'}
+          transparent
+          opacity={active ? 1 : 0.75}
+          side={THREE.DoubleSide}
+          depthTest={false}
         />
       </mesh>
-      {active && (
-        <Html distanceFactor={5} position={[0.12, 0.04, 0]} style={{ pointerEvents: 'none' }}>
-          <div className="med-callout">
-            <strong>{joint.label}</strong>
-            <div>Mobility: {joint.mobility == null ? '—' : `${joint.mobility}%`}</div>
-            <div>Inflammation: {joint.inflammation}</div>
-          </div>
-        </Html>
-      )}
-    </group>
+      <mesh position={[0, 0, 0.001]}>
+        <circleGeometry args={[0.007, 12]} />
+        <meshBasicMaterial
+          color={active ? '#75d18c' : '#9ad4aa'}
+          transparent
+          opacity={0.95}
+          depthTest={false}
+        />
+      </mesh>
+    </Billboard>
   )
 }
 
@@ -211,24 +243,38 @@ useGLTF.preload('/models/body.glb', true)
 
 export function AnatomyCanvas({
   layer,
+  showJoints,
+  activeJointId,
   onPick,
+  onJointSelect,
 }: {
   layer: AnatomyLayer
+  showJoints?: boolean
+  activeJointId?: string | null
   onPick: (name: string, type: string) => void
+  onJointSelect?: (id: string) => void
 }) {
   const [selectedName, setSelectedName] = useState<string | null>(null)
-  const [activeJoint, setActiveJoint] = useState<string | null>('knee')
 
   return (
     <Canvas
-      camera={{ position: [0.6, 1.1, 2.4], fov: 38, near: 0.01, far: 50 }}
-      dpr={[1, 1.75]}
-      gl={{ antialias: true, alpha: true }}
+      camera={{ position: [0.55, 1.05, 2.2], fov: 36, near: 0.05, far: 40 }}
+      dpr={[1, 1.25]}
+      frameloop="demand"
+      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      onCreated={({ gl }) => {
+        gl.setClearColor('#03090b', 0)
+      }}
     >
-      <color attach="background" args={['#07101c']} />
-      <ambientLight intensity={0.45} />
-      <directionalLight position={[2.5, 4, 2]} intensity={1.25} castShadow />
-      <directionalLight position={[-2, 1, -1]} intensity={0.35} color="#5ce1ff" />
+      <InvalidateOnChange
+        layer={layer}
+        selectedName={selectedName}
+        showJoints={showJoints}
+        activeJointId={activeJointId}
+      />
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[2.2, 3.5, 2]} intensity={1.05} />
+      <directionalLight position={[-1.8, 1.2, -1]} intensity={0.28} color="#75d18c" />
       <Suspense
         fallback={
           <Html center>
@@ -244,24 +290,28 @@ export function AnatomyCanvas({
             onPick(name, type)
           }}
         />
-        <Environment preset="city" />
       </Suspense>
-      {JOINTS.map((j) => (
-        <JointMarker
-          key={j.id}
-          joint={j}
-          active={activeJoint === j.id}
-          onClick={() => setActiveJoint(j.id)}
-        />
-      ))}
-      <ContactShadows position={[0, -0.02, 0]} opacity={0.35} scale={4} blur={2.2} />
+      {showJoints &&
+        JOINTS.map((j) => (
+          <JointMarker
+            key={j.id}
+            joint={j}
+            active={activeJointId === j.id}
+            onClick={() => onJointSelect?.(j.id)}
+          />
+        ))}
       <OrbitControls
         makeDefault
-        target={[0, 0.85, 0]}
-        minDistance={1.2}
-        maxDistance={4.5}
-        maxPolarAngle={Math.PI * 0.85}
-        enablePan
+        target={[0, 0.9, 0]}
+        minDistance={1.15}
+        maxDistance={3.8}
+        maxPolarAngle={Math.PI * 0.82}
+        enablePan={false}
+        enableDamping
+        dampingFactor={0.08}
+        onChange={() => {
+          /* demand loop: OrbitControls calls invalidate via makeDefault */
+        }}
       />
     </Canvas>
   )

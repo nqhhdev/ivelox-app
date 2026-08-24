@@ -9,6 +9,20 @@ export type AnatomyLayer =
   | 'visceral_fat'
   | 'nerves'
 
+export type JointCallout = {
+  id: string
+  label: string
+  position: [number, number, number]
+}
+
+/** Primary joints — positions tuned for Z-Anatomy standing figure. */
+export const JOINTS: JointCallout[] = [
+  { id: 'shoulder', label: 'Shoulder', position: [0.22, 1.32, 0.04] },
+  { id: 'hip', label: 'Hip', position: [0.12, 0.78, 0.05] },
+  { id: 'knee', label: 'Knee', position: [0.11, 0.42, 0.07] },
+  { id: 'ankle', label: 'Ankle', position: [0.1, 0.06, 0.04] },
+]
+
 export function estimateBodyFatPct(bmi: number, ageYears: number, sex: string): number {
   const sexAdj = sex.toLowerCase() === 'female' ? 1 : 0
   const est = 1.2 * bmi + 0.23 * ageYears - 10.8 * sexAdj - 5.4
