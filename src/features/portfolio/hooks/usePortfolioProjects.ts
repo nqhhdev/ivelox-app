@@ -41,8 +41,6 @@ async function fetchGithubProfile(user: string): Promise<GithubProfile> {
     avatarUrl: u.avatar_url,
     htmlUrl: u.html_url,
     location: u.location,
-    blog: u.blog,
-    company: u.company,
     publicRepos: u.public_repos,
     followers: u.followers,
     following: u.following,

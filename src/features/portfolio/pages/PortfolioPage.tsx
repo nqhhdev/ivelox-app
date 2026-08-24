@@ -6,34 +6,7 @@ import {
 } from '@/features/portfolio/hooks/usePortfolioProjects'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { usePlatformFeatures } from '@/shared/hooks/usePlatformFeatures'
-import './../portfolio.css'
-
-const LANG_COLORS: Record<string, string> = {
-  TypeScript: '#3178c6',
-  JavaScript: '#f1e05a',
-  Java: '#b07219',
-  Go: '#00ADD8',
-  Python: '#3572A5',
-  Dart: '#00B4AB',
-  Kotlin: '#A97BFF',
-  Swift: '#F05138',
-  Rust: '#dea584',
-  HTML: '#e34c26',
-  CSS: '#563d7c',
-  Shell: '#89e051',
-}
-
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  } catch {
-    return ''
-  }
-}
+import '../portfolio.css'
 
 export function PortfolioPage() {
   const { data: profile, isLoading: profileLoading } = useGithubProfile()
@@ -43,19 +16,17 @@ export function PortfolioPage() {
   const signOut = useAuthStore((s) => s.signOut)
   const healthEnabled = features?.health.enabled !== false
 
-  const displayName = profile?.name ?? portfolioContent.githubUser
-  const blogHref = profile?.blog
-    ? (profile.blog.startsWith('http') ? profile.blog : `https://${profile.blog}`)
-    : null
+  const avatarUrl = profile?.avatarUrl
+  const githubUrl = profile?.htmlUrl ?? `https://github.com/${portfolioContent.githubUser}`
+  const mailto = `mailto:${portfolioContent.email}?subject=${encodeURIComponent('Project inquiry — Flutter / mobile')}`
 
   return (
-    <div className="gh-page">
-      <header className="gh-header">
-        <Link to="/" className="gh-brand">{portfolioContent.brand}</Link>
-        <nav className="gh-nav">
-          <a href={`https://github.com/${portfolioContent.githubUser}`} target="_blank" rel="noreferrer">
-            GitHub
-          </a>
+    <div className="grg-page">
+      <header className="grg-top">
+        <Link to="/" className="grg-brand">{portfolioContent.brand}</Link>
+        <nav>
+          <a href={githubUrl} target="_blank" rel="noreferrer">GitHub</a>
+          <a href={mailto}>Contact</a>
           {healthEnabled && (
             <Link to={isAuthenticated ? '/health' : '/login'}>
               {isAuthenticated ? 'Health' : 'Sign in'}
@@ -67,101 +38,157 @@ export function PortfolioPage() {
         </nav>
       </header>
 
-      <div className="gh-layout">
-        <aside>
-          {profileLoading || !profile ? (
-            <>
-              <div className="gh-skeleton" style={{ width: '100%', maxWidth: 296, aspectRatio: '1', borderRadius: '50%' }} />
-              <div className="gh-skeleton" style={{ height: 28, width: '70%', marginTop: 16 }} />
-              <div className="gh-skeleton" style={{ height: 22, width: '40%', marginTop: 8 }} />
-            </>
+      <main className="grg-matrioska">
+        <div className="grg-hero-media" aria-hidden={profileLoading}>
+          {profileLoading || !avatarUrl ? (
+            <div className="grg-skeleton" style={{ width: '100%', aspectRatio: 1 }} />
           ) : (
             <>
+              <div className="grg-avatar-frame" />
               <img
-                className="gh-avatar"
-                src={profile.avatarUrl}
-                alt={profile.login}
-                width={296}
-                height={296}
+                className="grg-avatar"
+                src={avatarUrl}
+                alt=""
+                width={280}
+                height={280}
               />
-              <h1 className="gh-profile-name">{displayName}</h1>
-              <p className="gh-profile-login">{profile.login}</p>
-              {profile.bio ? <p className="gh-bio">{profile.bio}</p> : null}
-
-              <a
-                className="gh-btn"
-                href={profile.htmlUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View on GitHub
-              </a>
-
-              <div className="gh-counts">
-                <span><strong>{profile.followers}</strong> followers</span>
-                <span>·</span>
-                <span><strong>{profile.following}</strong> following</span>
-                <span>·</span>
-                <span><strong>{profile.publicRepos}</strong> repos</span>
-              </div>
-
-              <div className="gh-meta">
-                {profile.company ? <span>{profile.company}</span> : null}
-                {profile.location ? <span>{profile.location}</span> : null}
-                {blogHref ? (
-                  <a href={blogHref} target="_blank" rel="noreferrer">{profile.blog}</a>
-                ) : null}
-              </div>
             </>
           )}
-        </aside>
+        </div>
 
-        <section>
-          <h2 className="gh-section-title">
-            Popular repositories
-          </h2>
+        <h1>{portfolioContent.name}</h1>
+        <p className="grg-subtitle">{portfolioContent.title}</p>
+        <p className="grg-meta-line">
+          {portfolioContent.location}
+          {' · '}
+          <a href={mailto}>{portfolioContent.email}</a>
+          {' · '}
+          <a href={githubUrl} target="_blank" rel="noreferrer">@{portfolioContent.githubUser}</a>
+        </p>
 
+        <p><em>{portfolioContent.tagline}</em></p>
+        {portfolioContent.pitch.map((para) => (
+          <p key={para.slice(0, 32)}>{para}</p>
+        ))}
+
+        <div className="grg-cta-row">
+          <a className="grg-cta" href={mailto}>Hire / inquire</a>
+          <a className="grg-cta grg-cta-ghost" href={githubUrl} target="_blank" rel="noreferrer">
+            GitHub profile
+          </a>
+        </div>
+
+        <ul className="grg-tags" aria-label="Skills tags">
+          {portfolioContent.tags.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+
+        <hr className="grg-hr" />
+
+        <section className="grg-section">
+          <h2>Features</h2>
+          <div className="grg-skill-grid">
+            {portfolioContent.skills.map((block) => (
+              <div key={block.heading} className="grg-skill-card">
+                <h3>{block.heading}</h3>
+                <ul>
+                  {block.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="grg-section">
+          <h2>Campaign log</h2>
+          <p style={{ color: 'rgba(238,240,242,0.62)', marginBottom: '1rem' }}>
+            Selected production work — full delivery from architecture to multi-store release.
+          </p>
+          {portfolioContent.experience.map((job) => (
+            <article key={`${job.company}-${job.period}`} className="grg-job">
+              <div className="grg-job-head">
+                <div className="grg-job-role">{job.role}</div>
+                <div className="grg-job-period">{job.period}</div>
+              </div>
+              <div className="grg-job-company">{job.company}</div>
+              <p>{job.summary}</p>
+              <ul>
+                {job.bullets.map((b) => (
+                  <li key={b.slice(0, 40)}>{b}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </section>
+
+        <section className="grg-section">
+          <h2>Open source</h2>
+          <ul className="grg-oss-list">
+            {portfolioContent.openSource.map((oss) => (
+              <li key={oss.name}>
+                <a className="grg-oss-name" href={oss.url} target="_blank" rel="noreferrer">
+                  {oss.name}
+                </a>
+                <span className="grg-oss-blurb">{oss.blurb}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="grg-section">
+          <h2>Public repositories</h2>
+          <p style={{ color: 'rgba(238,240,242,0.62)' }}>
+            Live from GitHub @{portfolioContent.githubUser}
+            {profile ? ` · ${profile.publicRepos} public repos · ${profile.followers} followers` : ''}.
+          </p>
           {reposLoading ? (
-            <ul className="gh-repo-grid">
+            <div className="grg-repo-grid">
               {Array.from({ length: 4 }).map((_, i) => (
-                <li key={i} className="gh-repo-card">
-                  <div className="gh-skeleton" style={{ height: 16, width: '50%' }} />
-                  <div className="gh-skeleton" style={{ height: 40, width: '100%', marginTop: 8 }} />
-                </li>
+                <div key={i} className="grg-skeleton" style={{ height: 120 }} />
               ))}
-            </ul>
-          ) : projects.length === 0 ? (
-            <p className="gh-muted">No public repositories yet.</p>
+            </div>
           ) : (
-            <ul className="gh-repo-grid">
-              {projects.map((p) => (
-                <li key={p.id} className="gh-repo-card">
-                  <a className="gh-repo-name" href={p.url} target="_blank" rel="noreferrer">
-                    {p.name}
-                  </a>
-                  <p className="gh-repo-desc">
-                    {p.description || 'No description'}
-                  </p>
-                  <div className="gh-repo-footer">
-                    {p.language ? (
-                      <span>
-                        <span
-                          className="gh-lang-dot"
-                          style={{ background: LANG_COLORS[p.language] ?? '#8b949e' }}
-                        />
-                        {p.language}
-                      </span>
-                    ) : null}
-                    {p.stars > 0 ? <span>★ {p.stars}</span> : null}
-                    {p.forks > 0 ? <span>Forks {p.forks}</span> : null}
-                    <span>Updated {formatDate(p.updatedAt)}</span>
+            <ul className="grg-repo-grid">
+              {projects.slice(0, 8).map((p) => (
+                <li key={p.id} className="grg-repo-card">
+                  <a href={p.url} target="_blank" rel="noreferrer">{p.name}</a>
+                  <p className="grg-repo-desc">{p.description || 'No description'}</p>
+                  <div className="grg-repo-meta">
+                    {[p.language, p.stars > 0 ? `★ ${p.stars}` : null]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </div>
                 </li>
               ))}
             </ul>
           )}
         </section>
-      </div>
+
+        <section className="grg-section">
+          <h2>Languages</h2>
+          <ul style={{ color: 'rgba(238,240,242,0.62)', paddingLeft: '1.15rem' }}>
+            {portfolioContent.languages.map((l) => (
+              <li key={l.name}>
+                <strong style={{ color: 'rgb(238,240,242)', fontWeight: 400 }}>{l.name}</strong>
+                {' — '}
+                {l.level}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <hr className="grg-hr" />
+
+        <p>{portfolioContent.signOff}</p>
+        <p className="grg-signed">
+          — {portfolioContent.name}
+          <br />
+          <a href={mailto}>{portfolioContent.email}</a>
+        </p>
+      </main>
     </div>
   )
 }
