@@ -28,6 +28,7 @@ const LAYER_OPTS: { id: AnatomyLayer; label: string }[] = [
 ]
 
 const MODE_OPTS: { id: AnatomyLayer; label: string }[] = [
+  { id: 'skin', label: 'Glass' },
   { id: 'vessels', label: 'Blood' },
   { id: 'visceral_fat', label: 'Fat' },
   { id: 'skeleton', label: 'Bone' },
@@ -93,7 +94,7 @@ export function MedicalAnalyticsDashboard({
 }) {
   const webgl = useWebGLOk()
   const [section, setSection] = useState<Section>('anatomy')
-  const [layer, setLayer] = useState<AnatomyLayer>('vessels')
+  const [layer, setLayer] = useState<AnatomyLayer>('skin')
   const [picked, setPicked] = useState<{ name: string; type: string; label: string } | null>(null)
   const [activeJoint, setActiveJoint] = useState<string | null>('knee')
   const [weight, setWeight] = useState(
@@ -258,7 +259,7 @@ export function MedicalAnalyticsDashboard({
               <div className="med-loading">WebGL unavailable — use a desktop browser.</div>
             )}
             <div className="med-viewport__hint">
-              Drag rotate · scroll zoom · right-drag / two-finger pan
+              Glass body · hover/click a muscle or bone to highlight
               {showJoints ? ' · tap a ring for joint' : ''}
             </div>
           </div>
