@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { GrgShell } from '@/shared/ui/GrgShell'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { useToast } from '@/shared/hooks/useToast'
@@ -9,7 +9,7 @@ import { useMealLog } from '../hooks/useMealLog'
 import { TodaySummaryCard } from '../components/TodaySummaryCard'
 import { MealList } from '../components/MealList'
 import { MealPlanList } from '../components/MealPlanList'
-import { BodyPanel } from '../components/BodyPanel'
+import { Body3DPanel } from '../components/Body3DPanel'
 import { BoardModal } from '../components/BoardModal'
 import { MealLogForm } from '../components/MealLogForm'
 import { ResolvePreview } from '../components/ResolvePreview'
@@ -17,7 +17,7 @@ import { HealthNavLinks } from '../components/HealthNavLinks'
 import { healthApi } from '../api/healthApi'
 import { GoalsForm } from './GoalsPage'
 import { useState } from 'react'
-import type { FoodUnit } from '../types'
+import type { DayMealSummary, FoodUnit } from '../types'
 
 type Panel = 'log' | 'goals' | 'burns' | null
 
@@ -27,6 +27,11 @@ export function HealthDashboardPage() {
   const qc = useQueryClient()
   const summary = useTodaySummary(date)
   const meals = useMeals(date)
+  const goal = useQuery({
+    queryKey: ['health', 'goals'],
+    queryFn: () => healthApi.getGoal(),
+    retry: false,
+  })
   const signOut = useAuthStore((s) => s.signOut)
   const [panel, setPanel] = useState<Panel>(null)
   const [burnName, setBurnName] = useState('walking')
@@ -180,8 +185,9 @@ export function HealthDashboardPage() {
           )}
         </div>
 
-        <BodyPanel
+        <Body3DPanel
           summary={data}
+          goal={goal.data}
           saving={weightMut.isPending}
           onSaveWeight={(kg) => weightMut.mutate(kg)}
         />

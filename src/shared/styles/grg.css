@@ -954,3 +954,36 @@
   font-size: 1rem;
   text-transform: uppercase;
 }
+
+/* Body 3D atlas */
+.grg-body3d__canvas {
+  height: 280px;
+  border: 1px solid var(--grg-line);
+  background: radial-gradient(ellipse at 50% 30%, rgba(11, 57, 84, 0.55), transparent 60%), #03090b;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.grg-body3d-tip {
+  width: 180px;
+  padding: 0.45rem 0.55rem;
+  background: rgba(3, 9, 11, 0.92);
+  border: 1px solid var(--grg-line);
+  color: var(--grg-fg);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.grg-body3d-tip strong {
+  display: block;
+  color: var(--grg-title);
+  margin-bottom: 0.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.grg-body3d-tip p {
+  margin: 0;
+  color: var(--grg-muted);
+}

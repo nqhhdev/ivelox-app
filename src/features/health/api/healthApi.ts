@@ -77,6 +77,26 @@ export const healthApi = {
 
   mealPlan: () => apiClient.get<MealPlanSlot[]>('/api/v1/health/goals/meal-plan'),
 
+  bodyAtlas: () =>
+    apiClient.get<{
+      disclaimer: string
+      citations: { id: string; title: string; url: string }[]
+      layers: { id: string; label: string; color: string }[]
+      regions: {
+        id: string
+        label: string
+        position: number[]
+        tips: { layer: string; text: string; citation_ids: string[] }[]
+      }[]
+      future_conditions: {
+        id: string
+        label: string
+        systems: string[]
+        status: string
+        note: string
+      }[]
+    }>('/api/v1/health/body/atlas'),
+
   createBurn: (body: { activity_name: string; duration_min: number; kcal_burned?: number }) =>
     apiClient.post<BurnLog>('/api/v1/health/burns', body),
 
