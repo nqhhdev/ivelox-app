@@ -86,7 +86,7 @@ export function HealthDashboardPage() {
     onError: (e) => toast.error(e, 'Could not log burn.'),
   })
 
-  const emptySummary = {
+  const emptySummary: DayMealSummary = {
     eaten_kcal: 0,
     protein_g: 0,
     carb_g: 0,
