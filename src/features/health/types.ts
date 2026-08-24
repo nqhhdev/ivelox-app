@@ -34,8 +34,8 @@ export interface MealPlanSlot {
   meal_type: string
   target_kcal: number
   pct: number
-  suggestion: string
-  notes: string
+  suggestion?: string
+  notes?: string
 }
 
 /** Enriched /check/today (P4) — keeps eaten macros for P1 card. */

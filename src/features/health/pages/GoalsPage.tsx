@@ -7,6 +7,13 @@ import { healthApi } from '../api/healthApi'
 import { HealthNavLinks } from '../components/HealthNavLinks'
 import { MealPlanList } from '../components/MealPlanList'
 
+const MEAL_OPTIONS = [
+  { id: 'breakfast', label: 'Breakfast' },
+  { id: 'lunch', label: 'Lunch' },
+  { id: 'dinner', label: 'Dinner' },
+  { id: 'snack', label: 'Snack' },
+] as const
+
 export function GoalsPage() {
   const toast = useToast()
   const signOut = useAuthStore((s) => s.signOut)
@@ -30,6 +37,7 @@ export function GoalsPage() {
   const [activity, setActivity] = useState('moderate')
   const [changePct, setChangePct] = useState('-10')
   const [weeks, setWeeks] = useState('12')
+  const [mealTypes, setMealTypes] = useState<string[]>(['breakfast', 'lunch', 'dinner', 'snack'])
 
   useEffect(() => {
     if (body.data) {
@@ -47,8 +55,21 @@ export function GoalsPage() {
       if (goal.data.activity_level) setActivity(goal.data.activity_level)
       if (goal.data.weight_change_pct != null) setChangePct(String(goal.data.weight_change_pct))
       if (goal.data.weeks != null) setWeeks(String(goal.data.weeks))
+      if (goal.data.meal_plan?.length) {
+        setMealTypes(goal.data.meal_plan.map((s) => s.meal_type))
+      }
     }
   }, [goal.data])
+
+  const toggleMeal = (id: string) => {
+    setMealTypes((prev) => {
+      if (prev.includes(id)) {
+        if (prev.length === 1) return prev
+        return prev.filter((m) => m !== id)
+      }
+      return MEAL_OPTIONS.map((o) => o.id).filter((m) => prev.includes(m) || m === id)
+    })
+  }
 
   const save = useMutation({
     mutationFn: () =>
@@ -60,6 +81,7 @@ export function GoalsPage() {
         activity_level: activity,
         weight_change_pct: Number(changePct),
         weeks: Number(weeks),
+        meal_types: mealTypes,
       }),
     onSuccess: (data) => {
       toast.success(`Target ${data.daily_kcal_target} kcal/day`)
@@ -69,6 +91,7 @@ export function GoalsPage() {
   })
 
   const plan = goal.data?.meal_plan ?? save.data?.meal_plan ?? []
+  const daily = goal.data?.daily_kcal_target ?? save.data?.daily_kcal_target
 
   return (
     <GrgShell
@@ -86,7 +109,7 @@ export function GoalsPage() {
       <p className="grg-eyebrow">Health</p>
       <h1>Goals & meal plan</h1>
       <p className="grg-lead">
-        Example: reduce 10% weight — we compute BMI, target weight, daily kcal, and a full-day meal plan.
+        Set a weight goal — we compute daily kcal and split it across the meals you tick.
       </p>
 
       {(goal.data || save.data) && (
@@ -171,6 +194,28 @@ export function GoalsPage() {
             <input id="weeks" className="grg-input" value={weeks} onChange={(e) => setWeeks(e.target.value)} />
           </div>
         </div>
+
+        <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+          <legend className="grg-label">Meals you eat</legend>
+          <div className="grg-btn-row" style={{ marginTop: '0.35rem' }}>
+            {MEAL_OPTIONS.map((opt) => {
+              const on = mealTypes.includes(opt.id)
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={on ? 'grg-btn' : 'grg-btn grg-btn--ghost'}
+                  aria-pressed={on}
+                  onClick={() => toggleMeal(opt.id)}
+                >
+                  {opt.label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="grg-hint">Daily kcal is split evenly across the meals you select.</p>
+        </fieldset>
+
         <button type="submit" className="grg-btn grg-btn--block" disabled={save.isPending}>
           {save.isPending ? 'Calculating…' : 'Calculate plan'}
         </button>
@@ -178,6 +223,7 @@ export function GoalsPage() {
 
       <div className="grg-section-head">
         <h2>Day meal plan</h2>
+        {daily != null && <span className="grg-badge">{daily} kcal total</span>}
       </div>
       <MealPlanList slots={plan} />
     </GrgShell>

@@ -39,6 +39,7 @@ export type UpsertGoalBody = {
   weight_change_pct?: number
   weeks?: number
   daily_burn_target?: number
+  meal_types?: string[]
 }
 
 export const healthApi = {

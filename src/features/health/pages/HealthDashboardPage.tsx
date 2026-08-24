@@ -45,7 +45,7 @@ export function HealthDashboardPage() {
       <TodaySummaryCard summary={summary.data ?? emptySummary} />
 
       <div className="grg-section-head">
-        <h2>Meal plan</h2>
+        <h2>Meal targets</h2>
         <Link to="/health/goals" className="grg-btn grg-btn--ghost">
           Edit goal
         </Link>
