@@ -6,7 +6,7 @@ import {
 } from '@/features/portfolio/hooks/usePortfolioProjects'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { usePlatformFeatures } from '@/shared/hooks/usePlatformFeatures'
-import './portfolio.css'
+import './../portfolio.css'
 
 const LANG_COLORS: Record<string, string> = {
   TypeScript: '#3178c6',
