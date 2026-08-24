@@ -539,21 +539,29 @@
   padding: 0.7rem 1.15rem;
   border: 1px solid var(--grg-title);
   background: var(--grg-title);
-  color: var(--grg-bg);
+  color: var(--grg-bg) !important;
   font-family: var(--grg-font);
   font-weight: 400;
   font-size: 0.82rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  text-decoration: none;
+  text-decoration: none !important;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
+.grg-page a.grg-btn {
+  color: var(--grg-bg) !important;
+}
+
 .grg-btn:hover:not(:disabled) {
   background: transparent;
-  color: var(--grg-title);
+  color: var(--grg-title) !important;
   transform: translateY(-1px);
+}
+
+.grg-page a.grg-btn:hover {
+  color: var(--grg-title) !important;
 }
 
 .grg-btn:disabled {
@@ -567,11 +575,19 @@
 
 .grg-btn--ghost {
   background: transparent;
-  color: var(--grg-title);
+  color: var(--grg-title) !important;
+}
+
+.grg-page a.grg-btn--ghost {
+  color: var(--grg-title) !important;
 }
 
 .grg-btn--ghost:hover:not(:disabled) {
   background: var(--grg-accent-soft);
+}
+
+.grg-page a.grg-btn--ghost:hover {
+  color: var(--grg-title) !important;
 }
 
 .grg-btn--quiet {
@@ -755,6 +771,14 @@
 .grg-section-head h2 {
   margin: 0;
   font-size: 0.95rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.grg-section-head .grg-btn {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .grg-badge {
