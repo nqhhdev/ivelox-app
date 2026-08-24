@@ -8,22 +8,37 @@ function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1)
 }
 
+function MacroBar({
+  label,
+  eaten,
+  target,
+}: {
+  label: string
+  eaten: number
+  target?: number | null
+}) {
+  const pct = target && target > 0 ? Math.min(100, (eaten / target) * 100) : 0
+  return (
+    <div style={{ marginBottom: '0.65rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+        <span>{label}</span>
+        <span className="grg-hint" style={{ margin: 0 }}>
+          {fmt(eaten)}
+          {target != null ? ` / ${target}g` : 'g'}
+        </span>
+      </div>
+      <div className="grg-macro-track">
+        <div className="grg-macro-fill" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 export function TodaySummaryCard({ summary }: TodaySummaryCardProps) {
   const burned = summary.burned_kcal ?? 0
   const net = summary.net_kcal ?? summary.eaten_kcal - burned
   const remaining = summary.remaining_kcal
   const target = summary.daily_kcal_target
-
-  const stats = [
-    { label: 'Burned', value: `${fmt(burned)}` },
-    { label: 'Net', value: `${fmt(net)}` },
-    { label: 'Left', value: remaining == null ? '—' : fmt(remaining) },
-    { label: 'Target', value: target == null ? '—' : String(target) },
-    { label: 'Protein', value: `${fmt(summary.protein_g)}g` },
-    { label: 'Carbs', value: `${fmt(summary.carb_g)}g` },
-    { label: 'Fat', value: `${fmt(summary.fat_g)}g` },
-    { label: 'Meals', value: String(summary.meal_count) },
-  ]
 
   return (
     <div className="grg-panel">
@@ -32,6 +47,7 @@ export function TodaySummaryCard({ summary }: TodaySummaryCardProps) {
         <span className="grg-kcal">{fmt(summary.eaten_kcal)}</span>
         <span className="grg-hint" style={{ margin: 0 }}>
           kcal eaten
+          {target != null ? ` / ${target}` : ''}
         </span>
       </div>
       {summary.tip && (
@@ -39,27 +55,27 @@ export function TodaySummaryCard({ summary }: TodaySummaryCardProps) {
           {summary.tip}
         </p>
       )}
-      {(summary.bmi != null || summary.target_weight_kg != null) && (
-        <p className="grg-hint" style={{ marginBottom: '1rem' }}>
-          {summary.bmi != null && (
-            <>
-              BMI {fmt(summary.bmi)}
-              {summary.bmi_category ? ` (${summary.bmi_category})` : ''}
-            </>
-          )}
-          {summary.target_weight_kg != null && (
-            <> · Target weight {fmt(summary.target_weight_kg)} kg</>
-          )}
-        </p>
-      )}
-      <div className="grg-stat-grid">
-        {stats.map((m) => (
-          <div key={m.label}>
-            <div className="grg-stat-value">{m.value}</div>
-            <div className="grg-stat-label">{m.label}</div>
-          </div>
-        ))}
+      <div className="grg-stat-grid" style={{ marginBottom: '1rem' }}>
+        <div>
+          <div className="grg-stat-value">{fmt(burned)}</div>
+          <div className="grg-stat-label">Burned</div>
+        </div>
+        <div>
+          <div className="grg-stat-value">{fmt(net)}</div>
+          <div className="grg-stat-label">Net</div>
+        </div>
+        <div>
+          <div className="grg-stat-value">{remaining == null ? '—' : fmt(remaining)}</div>
+          <div className="grg-stat-label">Left</div>
+        </div>
+        <div>
+          <div className="grg-stat-value">{summary.meal_count}</div>
+          <div className="grg-stat-label">Meals</div>
+        </div>
       </div>
+      <MacroBar label="Protein" eaten={summary.protein_g} target={summary.protein_g_target} />
+      <MacroBar label="Carbs" eaten={summary.carb_g} target={summary.carb_g_target} />
+      <MacroBar label="Fat" eaten={summary.fat_g} target={summary.fat_g_target} />
     </div>
   )
 }

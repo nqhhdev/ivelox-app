@@ -41,7 +41,7 @@ function sumMacros(items: FoodItem[]) {
   )
 }
 
-export function useMealLog() {
+export function useMealLog(opts?: { onLogged?: () => void; embedded?: boolean }) {
   const date = localISODate()
   const navigate = useNavigate()
   const toast = useToast()
@@ -110,6 +110,10 @@ export function useMealLog() {
     const raw = (values.text ?? '').trim() || preview.items.map((i) => i.name).join(', ')
 
     try {
+      let image: { image_base64: string; image_mime: string } | undefined
+      if (imageFile) {
+        image = await fileToBase64(imageFile)
+      }
       await meals.create.mutateAsync({
         raw_input: raw,
         quantity: previewQty,
@@ -119,9 +123,16 @@ export function useMealLog() {
         carb_g: totals.carb_g,
         fat_g: totals.fat_g,
         ...(values.meal_type ? { meal_type: values.meal_type } : {}),
+        ...image,
       })
       toast.success('Meal logged')
-      navigate('/health')
+      setPreview(null)
+      setImage(null)
+      form.reset()
+      opts?.onLogged?.()
+      if (!opts?.embedded) {
+        navigate('/health')
+      }
     } catch (e) {
       toast.error(e, 'Could not save meal.')
     }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { GrgShell } from '@/shared/ui/GrgShell'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { useToast } from '@/shared/hooks/useToast'
@@ -14,9 +15,8 @@ const MEAL_OPTIONS = [
   { id: 'snack', label: 'Snack' },
 ] as const
 
-export function GoalsPage() {
+export function GoalsForm({ onSaved }: { onSaved?: () => void }) {
   const toast = useToast()
-  const signOut = useAuthStore((s) => s.signOut)
   const qc = useQueryClient()
 
   const goal = useQuery({
@@ -57,6 +57,8 @@ export function GoalsPage() {
       if (goal.data.weeks != null) setWeeks(String(goal.data.weeks))
       if (goal.data.meal_plan?.length) {
         setMealTypes(goal.data.meal_plan.map((s) => s.meal_type))
+      } else if (goal.data.meal_types?.length) {
+        setMealTypes(goal.data.meal_types)
       }
     }
   }, [goal.data])
@@ -86,51 +88,38 @@ export function GoalsPage() {
     onSuccess: (data) => {
       toast.success(`Target ${data.daily_kcal_target} kcal/day`)
       void qc.invalidateQueries({ queryKey: ['health'] })
+      onSaved?.()
     },
     onError: (e) => toast.error(e, 'Could not save goal.'),
   })
 
   const plan = goal.data?.meal_plan ?? save.data?.meal_plan ?? []
   const daily = goal.data?.daily_kcal_target ?? save.data?.daily_kcal_target
+  const shown = goal.data ?? save.data
 
   return (
-    <GrgShell
-      brand="iVelox"
-      nav={
-        <>
-          <HealthNavLinks active="/health/goals" />
-          <button type="button" onClick={signOut}>
-            Sign out
-          </button>
-        </>
-      }
-      narrow
-    >
-      <p className="grg-eyebrow">Health</p>
-      <h1>Goals & meal plan</h1>
-      <p className="grg-lead">
-        Set a weight goal — we compute daily kcal and split it across the meals you tick.
-      </p>
-
-      {(goal.data || save.data) && (
+    <>
+      {shown && (
         <div className="grg-panel" style={{ marginBottom: '1.25rem' }}>
           <p className="grg-eyebrow">Computed</p>
           <div className="grg-stat-grid">
             <div>
-              <div className="grg-stat-value">{(goal.data ?? save.data)?.bmi}</div>
+              <div className="grg-stat-value">{shown.bmi}</div>
               <div className="grg-stat-label">BMI</div>
             </div>
             <div>
-              <div className="grg-stat-value">{(goal.data ?? save.data)?.target_weight_kg} kg</div>
+              <div className="grg-stat-value">{shown.target_weight_kg} kg</div>
               <div className="grg-stat-label">Target wt</div>
             </div>
             <div>
-              <div className="grg-stat-value">{(goal.data ?? save.data)?.daily_kcal_target}</div>
+              <div className="grg-stat-value">{shown.daily_kcal_target}</div>
               <div className="grg-stat-label">Kcal/day</div>
             </div>
             <div>
-              <div className="grg-stat-value">{(goal.data ?? save.data)?.kg_to_change} kg</div>
-              <div className="grg-stat-label">Δ weight</div>
+              <div className="grg-stat-value">
+                {shown.protein_g_target ?? '—'}P / {shown.carb_g_target ?? '—'}C / {shown.fat_g_target ?? '—'}F
+              </div>
+              <div className="grg-stat-label">Macros g</div>
             </div>
           </div>
         </div>
@@ -187,7 +176,6 @@ export function GoalsPage() {
               onChange={(e) => setChangePct(e.target.value)}
               placeholder="-10"
             />
-            <p className="grg-hint">Use -10 to cut 10% body weight</p>
           </div>
           <div>
             <label className="grg-label" htmlFor="weeks">Weeks</label>
@@ -213,7 +201,7 @@ export function GoalsPage() {
               )
             })}
           </div>
-          <p className="grg-hint">Daily kcal is split evenly across the meals you select.</p>
+          <p className="grg-hint">Daily kcal splits evenly; under-eaten earlier meals roll into later ones.</p>
         </fieldset>
 
         <button type="submit" className="grg-btn grg-btn--block" disabled={save.isPending}>
@@ -226,6 +214,46 @@ export function GoalsPage() {
         {daily != null && <span className="grg-badge">{daily} kcal total</span>}
       </div>
       <MealPlanList slots={plan} />
+    </>
+  )
+}
+
+export function GoalsPage() {
+  const signOut = useAuthStore((s) => s.signOut)
+  const [params] = useSearchParams()
+  const embed = params.get('embed') === '1'
+
+  const body = (
+    <>
+      {!embed && (
+        <>
+          <p className="grg-eyebrow">Health</p>
+          <h1>Goals & meal plan</h1>
+          <p className="grg-lead">
+            Set a weight goal — we compute daily kcal + macros and split across the meals you tick.
+          </p>
+        </>
+      )}
+      <GoalsForm />
+    </>
+  )
+
+  if (embed) return <div className="grg-page" style={{ minHeight: 'auto', background: 'transparent' }}>{body}</div>
+
+  return (
+    <GrgShell
+      brand="iVelox"
+      nav={
+        <>
+          <HealthNavLinks active="/health/goals" />
+          <button type="button" onClick={signOut}>
+            Sign out
+          </button>
+        </>
+      }
+      narrow
+    >
+      {body}
     </GrgShell>
   )
 }

@@ -1,11 +1,7 @@
 import { Link } from 'react-router-dom'
 
 const LINKS = [
-  { to: '/health', label: 'Today' },
-  { to: '/health/log', label: 'Log' },
-  { to: '/health/burns', label: 'Burns' },
-  { to: '/health/body', label: 'Body' },
-  { to: '/health/goals', label: 'Goals' },
+  { to: '/health', label: 'Board' },
   { to: '/health/weekly', label: 'Weekly' },
 ] as const
 
@@ -16,7 +12,9 @@ export function HealthNavLinks({ active }: { active?: string }) {
         <Link
           key={l.to}
           to={l.to}
-          style={active === l.to ? { color: 'var(--grg-title, #75d18c)' } : undefined}
+          style={active === l.to || (l.to === '/health' && active?.startsWith('/health') && active !== '/health/weekly')
+            ? { color: 'var(--grg-title, #75d18c)' }
+            : undefined}
         >
           {l.label}
         </Link>

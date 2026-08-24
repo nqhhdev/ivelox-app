@@ -842,3 +842,115 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Health board */
+.grg-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.7fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .grg-board {
+    grid-template-columns: 1fr;
+  }
+  .grg-board__body {
+    order: -1;
+  }
+}
+
+.grg-board__body {
+  border: 1px solid var(--grg-line);
+  background: var(--grg-panel);
+  padding: 1.35rem;
+  position: sticky;
+  top: 5rem;
+}
+
+.grg-bmi-ring {
+  --pct: 40%;
+  width: 140px;
+  height: 140px;
+  margin: 0.5rem auto 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--grg-title) var(--pct), rgba(11, 57, 84, 0.55) 0);
+  display: grid;
+  place-items: center;
+}
+
+.grg-bmi-ring__inner {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  background: var(--grg-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.grg-bmi-ring__inner strong {
+  color: var(--grg-title);
+  font-family: ui-monospace, JetBrains Mono, monospace;
+  font-size: 1.45rem;
+  font-weight: 500;
+}
+
+.grg-bmi-ring__inner span {
+  color: var(--grg-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.grg-macro-track {
+  height: 6px;
+  background: rgba(11, 57, 84, 0.7);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.grg-macro-fill {
+  height: 100%;
+  background: var(--grg-title);
+  transition: width 0.25s ease;
+}
+
+.grg-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(3, 9, 11, 0.72);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  animation: grg-fade-in 0.25s ease both;
+}
+
+.grg-modal {
+  width: min(560px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  border: 1px solid var(--grg-line);
+  background: var(--grg-bg);
+  padding: 1.25rem 1.35rem 1.5rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.grg-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.grg-modal__head h2 {
+  margin: 0;
+  font-size: 1rem;
+  text-transform: uppercase;
+}

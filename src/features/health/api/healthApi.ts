@@ -28,6 +28,8 @@ export type CreateMealBody = {
   carb_g: number
   fat_g: number
   meal_type?: string
+  image_base64?: string
+  image_mime?: string
 }
 
 export type UpsertGoalBody = {
@@ -83,4 +85,31 @@ export const healthApi = {
 
   deleteBurn: (id: string) =>
     apiClient.delete<void>(`/api/v1/health/burns/${encodeURIComponent(id)}`),
+
+  setMealSlot: (body: { date?: string; meal_type: string; status: string }) =>
+    apiClient.put<void>('/api/v1/health/meal-slots', body),
+
+  dailyWeight: (body: { date?: string; weight_kg: number }) =>
+    apiClient.post<{
+      date: string
+      weight_kg: number
+      bmi: number | null
+      bmi_category: string | null
+    }>('/api/v1/health/weights/daily', body),
+
+  closeDay: (date?: string) =>
+    apiClient.post<{
+      date: string
+      eaten_kcal: number
+      burned_kcal: number
+      net_kcal: number
+      protein_g: number
+      carb_g: number
+      fat_g: number
+      kcal_target: number | null
+      protein_g_target: number | null
+      carb_g_target: number | null
+      fat_g_target: number | null
+      tips: string[]
+    }>(`/api/v1/health/check/close-day${date ? `?date=${encodeURIComponent(date)}` : ''}`),
 }

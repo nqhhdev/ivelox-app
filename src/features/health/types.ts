@@ -28,6 +28,8 @@ export interface MealLog {
   fat_g: number
   meal_type?: string | null
   logged_at: string
+  has_image?: boolean
+  image_url?: string | null
 }
 
 export interface MealPlanSlot {
@@ -36,9 +38,12 @@ export interface MealPlanSlot {
   pct: number
   suggestion?: string
   notes?: string
+  status?: string
+  eaten_kcal?: number
+  base_kcal?: number
 }
 
-/** Enriched /check/today (P4) — keeps eaten macros for P1 card. */
+/** Enriched /check/today (board) */
 export interface DayMealSummary {
   eaten_kcal: number
   burned_kcal?: number
@@ -48,12 +53,18 @@ export interface DayMealSummary {
   protein_g: number
   carb_g: number
   fat_g: number
+  protein_g_target?: number | null
+  carb_g_target?: number | null
+  fat_g_target?: number | null
   meal_count: number
   bmi?: number | null
   bmi_category?: string | null
   target_weight_kg?: number | null
+  weight_kg_today?: number | null
   tip?: string | null
   meal_plan?: MealPlanSlot[]
+  day_closed?: boolean
+  deficit_tips?: string[]
 }
 
 export interface BodyMetric {
@@ -88,9 +99,13 @@ export interface HealthGoal {
   kg_to_change: number | null
   daily_kcal_target: number | null
   daily_burn_target: number | null
+  protein_g_target?: number | null
+  carb_g_target?: number | null
+  fat_g_target?: number | null
   start_at: string | null
   target_at: string | null
   meal_plan: MealPlanSlot[]
+  meal_types?: string[]
 }
 
 export interface WeeklyCheck {
