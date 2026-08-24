@@ -57,9 +57,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     ...options,
     headers: buildHeaders(path, hasBody, options.headers),
   })
-  if (res.status === 401) {
-    handleUnauthorized()
-    throw new Error('unauthorized')
+  if (res.status === 401 || res.status === 403) {
+    // Owner-only API: missing/invalid session → clear token, never surface raw body
+    if (!isPublicPath(path)) {
+      handleUnauthorized()
+      throw new Error('unauthorized')
+    }
   }
   if (!res.ok) {
     const errorBody = await res.json().catch(() => null)
