@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Billboard, OrbitControls, useGLTF, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -255,34 +255,6 @@ function JointMarker({
   )
 }
 
-function FocusTarget({
-  showJoints,
-  activeJointId,
-}: {
-  showJoints?: boolean
-  activeJointId?: string | null
-}) {
-  const controls = useThree((s) => s.controls) as
-    | { target: THREE.Vector3; update: () => void }
-    | undefined
-  const invalidate = useThree((s) => s.invalidate)
-
-  useEffect(() => {
-    if (!controls?.target) return
-    if (showJoints && activeJointId) {
-      const j = JOINTS.find((x) => x.id === activeJointId)
-      if (j) {
-        controls.target.set(j.position[0], j.position[1], j.position[2])
-        controls.update()
-        invalidate()
-        return
-      }
-    }
-  }, [showJoints, activeJointId, controls, invalidate])
-
-  return null
-}
-
 useGLTF.preload('/models/body.glb', true)
 
 export function AnatomyCanvas({
@@ -299,6 +271,14 @@ export function AnatomyCanvas({
   onJointSelect?: (id: string) => void
 }) {
   const [selectedName, setSelectedName] = useState<string | null>(null)
+
+  const orbitTarget = useMemo((): [number, number, number] => {
+    if (showJoints && activeJointId) {
+      const j = JOINTS.find((x) => x.id === activeJointId)
+      if (j) return j.position
+    }
+    return [0, 0.9, 0]
+  }, [showJoints, activeJointId])
 
   return (
     <Canvas
@@ -338,10 +318,9 @@ export function AnatomyCanvas({
             onClick={() => onJointSelect?.(j.id)}
           />
         ))}
-      <FocusTarget showJoints={showJoints} activeJointId={activeJointId} />
       <OrbitControls
         makeDefault
-        target={[0, 0.9, 0]}
+        target={orbitTarget}
         minDistance={0.85}
         maxDistance={5.5}
         maxPolarAngle={Math.PI * 0.92}
@@ -356,3 +335,4 @@ export function AnatomyCanvas({
     </Canvas>
   )
 }
+
