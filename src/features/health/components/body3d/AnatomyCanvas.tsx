@@ -1,6 +1,13 @@
 import { Suspense, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { Billboard, OrbitControls, useGLTF, Html } from '@react-three/drei'
+import {
+  Billboard,
+  ContactShadows,
+  Environment,
+  Html,
+  OrbitControls,
+  useGLTF,
+} from '@react-three/drei'
 import * as THREE from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 import { JOINTS, type AnatomyLayer, type JointCallout } from './bodyMetrics'
@@ -13,20 +20,6 @@ export {
   healthScore,
   useWebGLOk,
 } from './bodyMetrics'
-
-const C = {
-  vessels: new THREE.Color('#c45c5c'),
-  vesselsEm: new THREE.Color('#7a1818'),
-  fat: new THREE.Color('#c4a35a'),
-  muscle: new THREE.Color('#b04a4a'),
-  skin: new THREE.Color('#c4a18a'),
-  bone: new THREE.Color('#e8e2d6'),
-  boneEm: new THREE.Color('#1a3040'),
-  nerve: new THREE.Color('#e6d84a'),
-  nerveEm: new THREE.Color('#8a7a10'),
-  accent: new THREE.Color('#75d18c'),
-  ghost: new THREE.Color('#6a7880'),
-}
 
 function meshType(obj: THREE.Object3D): string {
   const t = (obj.userData?.type as string | undefined)?.toLowerCase()
@@ -71,102 +64,92 @@ function buildPacks(root: THREE.Object3D): MeshPack[] {
     }
 
     mat.transparent = true
-    mat.metalness = 0.04
-    mat.roughness = 0.68
+    mat.metalness = 0.05
+    mat.roughness = 0.55
     packs.push({ mesh, type: meshType(mesh), mat })
   })
   return packs
 }
 
-/** Layer look closer to the first GLB pass — clear focus + soft ghost context. */
-function applyLayer(packs: MeshPack[], layer: AnatomyLayer, selectedName: string | null) {
+/**
+ * Pass 1 layer look: exclusive systems, high contrast, no muddy ghosts.
+ * Muscle ≠ bone on the same focus mode (except skin peek).
+ */
+function applyLayerPass1(packs: MeshPack[], layer: AnatomyLayer, selectedName: string | null) {
   for (const { mesh, type, mat } of packs) {
     const selected = selectedName != null && mesh.name === selectedName
+
+    mat.transparent = true
     mat.wireframe = false
-    mat.emissive.set('#000000')
+    mat.depthWrite = layer !== 'skin'
+    mat.emissive.setHex(0x000000)
     mat.emissiveIntensity = 0
 
+    if (selected) {
+      mesh.visible = true
+      mat.emissive.set('#3ecfff')
+      mat.emissiveIntensity = 0.55
+      mat.opacity = 1
+      mat.needsUpdate = true
+      continue
+    }
+
     if (type === 'muscle') {
+      mesh.visible =
+        layer === 'skin' ||
+        layer === 'muscles' ||
+        layer === 'vessels' ||
+        layer === 'visceral_fat' ||
+        layer === 'organs'
+
       if (layer === 'vessels') {
-        mesh.visible = true
-        mat.color.copy(C.vessels)
-        mat.emissive.copy(C.vesselsEm)
+        mat.color.set('#c23b3b')
+        mat.emissive.set('#7a1010')
         mat.emissiveIntensity = 0.4
-        mat.opacity = 0.58
+        mat.opacity = 0.55
         mat.depthWrite = false
       } else if (layer === 'visceral_fat') {
-        mesh.visible = true
-        mat.color.copy(C.fat)
-        mat.opacity = 0.38
+        mat.color.set('#c4a35a')
+        mat.opacity = 0.35
         mat.depthWrite = false
       } else if (layer === 'muscles') {
-        mesh.visible = true
-        mat.color.copy(C.muscle)
-        mat.opacity = 0.94
+        mat.color.set('#b04a4a')
+        mat.opacity = 0.92
         mat.depthWrite = true
       } else if (layer === 'skin') {
-        mesh.visible = true
-        mat.color.copy(C.skin)
-        mat.opacity = 0.24
+        mat.color.set('#c4a18a')
+        mat.opacity = 0.22
         mat.depthWrite = false
       } else if (layer === 'organs') {
-        mesh.visible = true
-        mat.color.copy(C.muscle)
-        mat.opacity = 0.18
+        mat.color.set('#b04a4a')
+        mat.opacity = 0.15
         mat.depthWrite = false
-      } else if (layer === 'skeleton' || layer === 'nerves') {
-        // Soft ghost so bones/nerves keep body context
-        mesh.visible = true
-        mat.color.copy(C.ghost)
-        mat.opacity = 0.1
-        mat.depthWrite = false
-      } else {
-        mesh.visible = false
       }
     } else if (type === 'bone') {
+      mesh.visible = layer === 'skeleton' || layer === 'skin' || layer === 'nerves'
+
       if (layer === 'skeleton') {
-        mesh.visible = true
-        mat.color.copy(C.bone)
-        mat.emissive.copy(C.boneEm)
+        mat.color.set('#e8e2d6')
+        mat.emissive.set('#1a3040')
         mat.emissiveIntensity = 0.1
-        mat.opacity = 0.96
+        mat.opacity = 0.95
         mat.depthWrite = true
       } else if (layer === 'nerves') {
-        mesh.visible = true
-        mat.color.copy(C.nerve)
-        mat.emissive.copy(C.nerveEm)
+        mat.color.set('#e6d84a')
+        mat.emissive.set('#8a7a10')
         mat.emissiveIntensity = 0.28
         mat.opacity = 0.72
         mat.depthWrite = false
       } else if (layer === 'skin') {
-        mesh.visible = true
-        mat.color.copy(C.bone)
+        mat.color.set('#e8e2d6')
         mat.opacity = 0.12
         mat.depthWrite = false
-      } else if (layer === 'muscles' || layer === 'vessels' || layer === 'visceral_fat') {
-        mesh.visible = true
-        mat.color.copy(C.bone)
-        mat.opacity = 0.14
-        mat.depthWrite = false
-      } else if (layer === 'organs') {
-        mesh.visible = true
-        mat.color.copy(C.bone)
-        mat.opacity = 0.08
-        mat.depthWrite = false
-      } else {
-        mesh.visible = false
       }
     } else {
       mesh.visible = layer === 'organs' || layer === 'skin'
-      mat.color.copy(layer === 'organs' ? C.fat : C.skin)
-      mat.opacity = layer === 'organs' ? 0.55 : 0.25
+      mat.color.set(layer === 'organs' ? '#c4a35a' : '#c4a18a')
+      mat.opacity = 0.4
       mat.depthWrite = false
-    }
-
-    if (selected && mesh.visible) {
-      mat.emissive.copy(C.accent)
-      mat.emissiveIntensity = 0.55
-      mat.opacity = Math.max(mat.opacity, 0.88)
     }
 
     mat.needsUpdate = true
@@ -189,13 +172,15 @@ function AnatomyModel({
   const root = useMemo(() => {
     const clone = scene.clone(true)
     packsRef.current = buildPacks(clone)
+    clone.scale.setScalar(1)
+    clone.rotation.set(0, 0, 0)
     clone.position.set(0, -0.05, 0)
     return clone
   }, [scene])
 
   useLayoutEffect(() => {
     if (!packsRef.current) return
-    applyLayer(packsRef.current, layer, selectedName)
+    applyLayerPass1(packsRef.current, layer, selectedName)
     invalidate()
   }, [root, layer, selectedName, invalidate])
 
@@ -277,22 +262,22 @@ export function AnatomyCanvas({
       const j = JOINTS.find((x) => x.id === activeJointId)
       if (j) return j.position
     }
-    return [0, 0.9, 0]
+    return [0, 0.85, 0]
   }, [showJoints, activeJointId])
 
   return (
     <Canvas
-      camera={{ position: [0.55, 1.05, 2.2], fov: 36, near: 0.05, far: 40 }}
-      dpr={[1, 1.25]}
-      frameloop="demand"
+      camera={{ position: [0.6, 1.1, 2.4], fov: 38, near: 0.01, far: 50 }}
+      dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       onCreated={({ gl }) => {
         gl.setClearColor('#03090b', 0)
       }}
     >
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[2.2, 3.5, 2]} intensity={1.2} />
-      <directionalLight position={[-1.8, 1.2, -1]} intensity={0.35} color="#75d18c" />
+      <color attach="background" args={['#03090b']} />
+      <ambientLight intensity={0.45} />
+      <directionalLight position={[2.5, 4, 2]} intensity={1.25} />
+      <directionalLight position={[-2, 1, -1]} intensity={0.35} color="#5ce1ff" />
       <Suspense
         fallback={
           <Html center>
@@ -308,6 +293,7 @@ export function AnatomyCanvas({
             onPick(name, type)
           }}
         />
+        <Environment preset="city" />
       </Suspense>
       {showJoints &&
         JOINTS.map((j) => (
@@ -318,21 +304,19 @@ export function AnatomyCanvas({
             onClick={() => onJointSelect?.(j.id)}
           />
         ))}
+      <ContactShadows position={[0, -0.02, 0]} opacity={0.32} scale={4} blur={2} frames={1} />
       <OrbitControls
         makeDefault
         target={orbitTarget}
-        minDistance={0.85}
-        maxDistance={5.5}
-        maxPolarAngle={Math.PI * 0.92}
+        minDistance={1.0}
+        maxDistance={4.8}
+        maxPolarAngle={Math.PI * 0.85}
         enablePan
         screenSpacePanning
-        panSpeed={0.9}
-        zoomSpeed={0.95}
-        rotateSpeed={0.85}
+        panSpeed={0.85}
         enableDamping
-        dampingFactor={0.12}
+        dampingFactor={0.08}
       />
     </Canvas>
   )
 }
-
