@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AuthShell } from '@/features/auth/components/AuthShell'
@@ -13,6 +13,8 @@ export function OtpLoginPage() {
   const [sent, setSent] = useState(false)
   const [busySend, setBusySend] = useState(false)
   const [busyVerify, setBusyVerify] = useState(false)
+  const verifyingRef = useRef(false)
+  const lastSubmittedRef = useRef('')
 
   const onRequest = async () => {
     setBusySend(true)
@@ -20,6 +22,7 @@ export function OtpLoginPage() {
       await requestOtp()
       setSent(true)
       setCode('')
+      lastSubmittedRef.current = ''
       toast.success('OTP sent to Telegram')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to send OTP')
@@ -28,12 +31,10 @@ export function OtpLoginPage() {
     }
   }
 
-  const onVerify = async () => {
-    const trimmed = code.replace(/\D/g, '').slice(0, 6)
-    if (trimmed.length !== 6) {
-      toast.error('Enter the 6-digit code')
-      return
-    }
+  const onVerify = async (trimmed: string) => {
+    if (verifyingRef.current || lastSubmittedRef.current === trimmed) return
+    verifyingRef.current = true
+    lastSubmittedRef.current = trimmed
     setBusyVerify(true)
     try {
       await verifyOtp(trimmed)
@@ -41,12 +42,21 @@ export function OtpLoginPage() {
       navigate('/health', { replace: true })
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Invalid OTP')
+      setCode('')
+      lastSubmittedRef.current = ''
     } finally {
+      verifyingRef.current = false
       setBusyVerify(false)
     }
   }
 
-  const canVerify = code.replace(/\D/g, '').length === 6
+  const onCodeChange = (next: string) => {
+    const trimmed = next.replace(/\D/g, '').slice(0, 6)
+    setCode(trimmed)
+    if (trimmed.length === 6) {
+      void onVerify(trimmed)
+    }
+  }
 
   return (
     <AuthShell>
@@ -61,40 +71,21 @@ export function OtpLoginPage() {
           <button
             type="button"
             className="grg-btn grg-btn--block"
-            disabled={busySend}
+            disabled={busySend || busyVerify}
             onClick={() => void onRequest()}
           >
             {busySend ? 'Sending…' : sent ? 'Resend OTP' : 'Send OTP'}
           </button>
 
           <div>
-            <label htmlFor="otp-code" className="grg-label">
-              Enter code
-            </label>
-            <OTPInput value={code} onChange={setCode} />
-            <input
-              id="otp-code"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              name="otp"
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="••••••"
-              aria-label="6-digit OTP"
-              className="grg-input grg-input--otp"
-              style={{ marginTop: 14 }}
-            />
+            <span className="grg-label">Enter code</span>
+            <OTPInput value={code} onChange={onCodeChange} disabled={busyVerify} />
+            {busyVerify && (
+              <p className="grg-hint" style={{ marginTop: 12, textAlign: 'center' }}>
+                Verifying…
+              </p>
+            )}
           </div>
-
-          <button
-            type="button"
-            className="grg-btn grg-btn--ghost grg-btn--block"
-            disabled={busyVerify || !canVerify}
-            onClick={() => void onVerify()}
-          >
-            {busyVerify ? 'Verifying…' : 'Verify & sign in'}
-          </button>
         </div>
       </div>
     </AuthShell>

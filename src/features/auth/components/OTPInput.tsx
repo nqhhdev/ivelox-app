@@ -3,11 +3,12 @@ import { useRef, type KeyboardEvent, type ClipboardEvent } from 'react'
 interface OTPInputProps {
   value: string
   onChange: (value: string) => void
+  disabled?: boolean
   /** @deprecated GRG theme is always dark */
   tone?: 'light' | 'dark'
 }
 
-export function OTPInput({ value, onChange }: OTPInputProps) {
+export function OTPInput({ value, onChange, disabled = false }: OTPInputProps) {
   const digits = value.replace(/\D/g, '').split('').concat(Array(6).fill('')).slice(0, 6)
   const refs = useRef<(HTMLInputElement | null)[]>([])
   const len = value.replace(/\D/g, '').length
@@ -51,6 +52,7 @@ export function OTPInput({ value, onChange }: OTPInputProps) {
             aria-label={`OTP digit ${i + 1}`}
             maxLength={1}
             value={d}
+            disabled={disabled}
             autoFocus={i === 0}
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
