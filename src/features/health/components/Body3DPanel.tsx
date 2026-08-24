@@ -1,8 +1,8 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { healthApi } from '../../api/healthApi'
-import type { DayMealSummary, HealthGoal } from '../../types'
-import { BodyPanel } from '../BodyPanel'
+import { healthApi } from '../api/healthApi'
+import type { DayMealSummary, HealthGoal } from '../types'
+import { BodyPanel } from './BodyPanel'
 import {
   estimateBodyFatPct,
   useWebGLOk,
