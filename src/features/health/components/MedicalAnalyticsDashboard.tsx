@@ -256,8 +256,8 @@ export function MedicalAnalyticsDashboard({
               <div className="med-loading">WebGL unavailable — use a desktop browser.</div>
             )}
             <div className="med-viewport__hint">
-              Drag to rotate · scroll to zoom
-              {showJoints ? ' · tap a ring for joint detail' : ''}
+              Drag rotate · scroll zoom · right-drag / two-finger pan
+              {showJoints ? ' · tap a ring for joint' : ''}
             </div>
           </div>
 
