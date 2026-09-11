@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { healthApi } from '../api/healthApi'
 
 export function useMeals(date: string) {
@@ -6,6 +6,7 @@ export function useMeals(date: string) {
   const list = useQuery({
     queryKey: ['health', 'meals', date],
     queryFn: () => healthApi.listMeals(date),
+    placeholderData: keepPreviousData,
   })
   const create = useMutation({
     mutationFn: healthApi.createMeal,

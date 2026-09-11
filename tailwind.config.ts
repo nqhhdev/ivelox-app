@@ -54,7 +54,8 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Geist Variable', 'system-ui', 'sans-serif'],
+        sans: ['Outfit Variable', 'Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono Variable', 'JetBrains Mono', 'ui-monospace', 'monospace'],
       },
     },
   },

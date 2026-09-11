@@ -5,7 +5,6 @@ import type { DayMealSummary, HealthGoal } from '../types'
 import {
   estimateBodyFatPct,
   healthScore,
-  JOINTS,
   useWebGLOk,
   visceralFatScore,
   type AnatomyLayer,
@@ -14,6 +13,15 @@ import {
 const AnatomyCanvas = lazy(() =>
   import('./body3d/AnatomyCanvas').then((m) => ({ default: m.AnatomyCanvas })),
 )
+
+const JOINT_IDS = [
+  { id: 'shoulder', label: 'Shoulder' },
+  { id: 'elbow', label: 'Elbow' },
+  { id: 'wrist', label: 'Wrist' },
+  { id: 'hip', label: 'Hip' },
+  { id: 'knee', label: 'Knee' },
+  { id: 'ankle', label: 'Ankle' },
+] as const
 
 type Section = 'overview' | 'anatomy' | 'blood' | 'fat' | 'bones' | 'joints'
 
@@ -28,11 +36,10 @@ const LAYER_OPTS: { id: AnatomyLayer; label: string }[] = [
 ]
 
 const MODE_OPTS: { id: AnatomyLayer; label: string }[] = [
-  { id: 'skin', label: 'Glass' },
-  { id: 'vessels', label: 'Blood' },
-  { id: 'visceral_fat', label: 'Fat' },
-  { id: 'skeleton', label: 'Bone' },
-  { id: 'muscles', label: 'Muscle' },
+  { id: 'vessels', label: 'Blood Flow' },
+  { id: 'visceral_fat', label: 'Visceral Fat' },
+  { id: 'skeleton', label: 'Skeleton' },
+  { id: 'muscles', label: 'Muscles' },
 ]
 
 function statusClass(status: string): string {
@@ -94,8 +101,8 @@ export function MedicalAnalyticsDashboard({
 }) {
   const webgl = useWebGLOk()
   const [section, setSection] = useState<Section>('anatomy')
-  const [layer, setLayer] = useState<AnatomyLayer>('skin')
-  const [picked, setPicked] = useState<{ name: string; type: string; label: string } | null>(null)
+  const [layer, setLayer] = useState<AnatomyLayer>('vessels')
+  const [picked, setPicked] = useState<{ name: string; type: string } | null>(null)
   const [activeJoint, setActiveJoint] = useState<string | null>('knee')
   const [weight, setWeight] = useState(
     summary.weight_kg_today != null ? String(summary.weight_kg_today) : '',
@@ -132,8 +139,7 @@ export function MedicalAnalyticsDashboard({
           : t.layer === (layer === 'skeleton' || layer === 'nerves' ? 'bone' : 'fat'),
       )?.text
 
-  const joint = JOINTS.find((j) => j.id === activeJoint) ?? JOINTS[2]
-  const showJoints = section === 'joints'
+  const joint = JOINT_IDS.find((j) => j.id === activeJoint) ?? JOINT_IDS[4]
 
   const setSectionAndLayer = (id: Section) => {
     setSection(id)
@@ -247,26 +253,20 @@ export function MedicalAnalyticsDashboard({
               <Suspense fallback={<div className="med-loading">Loading 3D…</div>}>
                 <AnatomyCanvas
                   layer={layer}
-                  showJoints={showJoints}
-                  activeJointId={activeJoint}
-                  onPick={(name, type, label) =>
-                    setPicked({ name, type, label: label ?? name })
-                  }
-                  onJointSelect={setActiveJoint}
+                  onPick={(name, type) => setPicked({ name, type })}
                 />
               </Suspense>
             ) : (
               <div className="med-loading">WebGL unavailable — use a desktop browser.</div>
             )}
             <div className="med-viewport__hint">
-              Glass body · hover/click a muscle or bone to highlight
-              {showJoints ? ' · tap a ring for joint' : ''}
+              Drag to rotate · Scroll to zoom · Right-drag to pan · Click structure to highlight
             </div>
           </div>
 
-          {(picked || tip) && !showJoints && (
+          {(picked || tip) && (
             <p className="med-inspect-line">
-              <span>{picked?.label ?? picked?.name ?? 'Tip'}</span>
+              <span>{picked?.name ?? 'Tip'}</span>
               {picked ? ` · ${picked.type}` : ''}
               {tip ? ` — ${tip}` : ''}
             </p>
@@ -433,7 +433,7 @@ export function MedicalAnalyticsDashboard({
             <div className="med-block">
               <p className="med-kicker">Joint · {joint.label}</p>
               <div className="med-joint-list">
-                {JOINTS.map((j) => (
+                {JOINT_IDS.map((j) => (
                   <button
                     key={j.id}
                     type="button"

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useToast } from '@/shared/hooks/useToast'
 import { mealLogFormSchema, parseQuantity, type MealLogFormValues } from '../schemas/meal.schemas'
 import type { FoodItem, ResolveResult } from '../types'
-import { localISODate } from '../lib/date'
+import { localISODate, loggedAtForDate } from '../lib/date'
 import { useFoodResolve } from './useFoodResolve'
 import { useMeals } from './useMeals'
 
@@ -13,7 +13,9 @@ export async function fileToBase64(file: File): Promise<{ image_base64: string; 
   const buf = await file.arrayBuffer()
   const bytes = new Uint8Array(buf)
   let binary = ''
-  bytes.forEach((b) => { binary += String.fromCharCode(b) })
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b)
+  })
   return { image_base64: btoa(binary), image_mime: file.type || 'image/jpeg' }
 }
 
@@ -41,8 +43,13 @@ function sumMacros(items: FoodItem[]) {
   )
 }
 
-export function useMealLog(opts?: { onLogged?: () => void; embedded?: boolean }) {
-  const date = localISODate()
+export function useMealLog(opts?: {
+  onLogged?: () => void
+  embedded?: boolean
+  /** Civil day YYYY-MM-DD — past days send logged_at */
+  date?: string
+}) {
+  const date = opts?.date ?? localISODate()
   const navigate = useNavigate()
   const toast = useToast()
   const resolve = useFoodResolve()
@@ -108,6 +115,7 @@ export function useMealLog(opts?: { onLogged?: () => void; embedded?: boolean })
     const values = form.getValues()
     const totals = sumMacros(scaledItems)
     const raw = (values.text ?? '').trim() || preview.items.map((i) => i.name).join(', ')
+    const today = localISODate()
 
     try {
       let image: { image_base64: string; image_mime: string } | undefined
@@ -123,9 +131,10 @@ export function useMealLog(opts?: { onLogged?: () => void; embedded?: boolean })
         carb_g: totals.carb_g,
         fat_g: totals.fat_g,
         ...(values.meal_type ? { meal_type: values.meal_type } : {}),
+        ...(date !== today ? { logged_at: loggedAtForDate(date) } : {}),
         ...image,
       })
-      toast.success('Meal logged')
+      toast.success(date !== today ? `Meal logged for ${date}` : 'Meal logged')
       setPreview(null)
       setImage(null)
       form.reset()

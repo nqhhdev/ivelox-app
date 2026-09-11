@@ -8,6 +8,8 @@ interface GrgShellProps {
   children: ReactNode
   narrow?: boolean
   narrowSm?: boolean
+  /** Light board theme (health) */
+  light?: boolean
 }
 
 export function GrgShell({
@@ -17,9 +19,10 @@ export function GrgShell({
   children,
   narrow = false,
   narrowSm = false,
+  light = false,
 }: GrgShellProps) {
   return (
-    <div className="grg-page">
+    <div className={`grg-page${light ? ' grg-page--light' : ''}`}>
       <header className="grg-top">
         <Link to={brandTo} className="grg-brand">
           {brand}

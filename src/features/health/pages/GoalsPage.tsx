@@ -242,6 +242,7 @@ export function GoalsPage() {
 
   return (
     <GrgShell
+      light
       brand="iVelox"
       nav={
         <>

@@ -28,6 +28,7 @@ export function MealLogPage() {
 
   return (
     <GrgShell
+      light
       brand="iVelox"
       nav={
         <>

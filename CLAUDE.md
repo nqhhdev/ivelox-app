@@ -35,7 +35,11 @@ All vars must be prefixed `VITE_`. Required:
 - Always run `npx tsc --noEmit` before committing
 
 ## Routes
-- `/` — public portfolio
+- `/` — public portfolio (hero + 4 case studies)
+- `/work/:slug` — case study (twake-chat, tmail, vault22, moonfit)
+- `/oss` — public PRs
+- `/blog`, `/blog/:slug` — writing backlog
+- `/now` — current focus
 - `/login` — OTP
 - `/health/*` — JWT + feature flag
 

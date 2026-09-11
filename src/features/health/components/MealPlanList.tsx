@@ -36,19 +36,17 @@ export function MealPlanList({
                 {s.base_kcal != null ? ` · base ${s.base_kcal}` : ''}
               </div>
               {onStatus && !closed ? (
-                <div className="grg-btn-row" style={{ marginTop: 8 }}>
+                <div className="hb-chip-row">
                   <button
                     type="button"
-                    className="grg-btn grg-btn--ghost"
-                    style={{ padding: '0.35rem 0.65rem', fontSize: '0.7rem' }}
+                    className="hb-chip hb-chip--ok"
                     onClick={() => onStatus(s.meal_type, 'done')}
                   >
                     Done
                   </button>
                   <button
                     type="button"
-                    className="grg-btn grg-btn--quiet"
-                    style={{ padding: '0.35rem 0.65rem', fontSize: '0.7rem' }}
+                    className="hb-chip hb-chip--muted"
                     onClick={() => onStatus(s.meal_type, 'skipped')}
                   >
                     Skip

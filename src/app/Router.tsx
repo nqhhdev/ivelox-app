@@ -3,12 +3,17 @@ import { useAuthStore } from '@/shared/hooks/useAuth'
 import { usePlatformFeatures } from '@/shared/hooks/usePlatformFeatures'
 import { OtpLoginPage } from '@/features/auth/pages/OtpLoginPage'
 import { PortfolioPage } from '@/features/portfolio/pages/PortfolioPage'
+import { WorkPage } from '@/features/portfolio/pages/WorkPage'
+import { OssPage } from '@/features/portfolio/pages/OssPage'
+import { BlogIndexPage } from '@/features/portfolio/pages/BlogIndexPage'
+import { BlogPostPage } from '@/features/portfolio/pages/BlogPostPage'
+import { NowPage } from '@/features/portfolio/pages/NowPage'
 import { HealthDashboardPage } from '@/features/health/pages/HealthDashboardPage'
 import { MealLogPage } from '@/features/health/pages/MealLogPage'
 import { BodyMetricsPage } from '@/features/health/pages/BodyMetricsPage'
 import { GoalsPage } from '@/features/health/pages/GoalsPage'
 import { BurnsPage } from '@/features/health/pages/BurnsPage'
-import { WeeklyPage } from '@/features/health/pages/WeeklyPage'
+import { HistoryPage } from '@/features/health/pages/HistoryPage'
 
 function LoadingScreen() {
   return (
@@ -46,6 +51,11 @@ export default function Router() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<PortfolioPage />} />
+        <Route path="/work/:slug" element={<WorkPage />} />
+        <Route path="/oss" element={<OssPage />} />
+        <Route path="/blog" element={<BlogIndexPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
+        <Route path="/now" element={<NowPage />} />
         <Route path="/login" element={<AuthGuard><OtpLoginPage /></AuthGuard>} />
 
         <Route path="/health" element={<HealthRoute><HealthDashboardPage /></HealthRoute>} />
@@ -53,7 +63,8 @@ export default function Router() {
         <Route path="/health/body" element={<HealthRoute><BodyMetricsPage /></HealthRoute>} />
         <Route path="/health/goals" element={<HealthRoute><GoalsPage /></HealthRoute>} />
         <Route path="/health/burns" element={<HealthRoute><BurnsPage /></HealthRoute>} />
-        <Route path="/health/weekly" element={<HealthRoute><WeeklyPage /></HealthRoute>} />
+        <Route path="/health/history" element={<HealthRoute><HistoryPage /></HealthRoute>} />
+        <Route path="/health/weekly" element={<Navigate to="/health/history" replace />} />
 
         <Route path="/register" element={<Navigate to="/login" replace />} />
         <Route path="/verify-email" element={<Navigate to="/login" replace />} />

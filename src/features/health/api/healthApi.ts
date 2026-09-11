@@ -28,6 +28,7 @@ export type CreateMealBody = {
   carb_g: number
   fat_g: number
   meal_type?: string
+  logged_at?: string
   image_base64?: string
   image_mime?: string
 }
@@ -97,8 +98,12 @@ export const healthApi = {
       }[]
     }>('/api/v1/health/body/atlas'),
 
-  createBurn: (body: { activity_name: string; duration_min: number; kcal_burned?: number }) =>
-    apiClient.post<BurnLog>('/api/v1/health/burns', body),
+  createBurn: (body: {
+    activity_name: string
+    duration_min: number
+    kcal_burned?: number
+    logged_at?: string
+  }) => apiClient.post<BurnLog>('/api/v1/health/burns', body),
 
   listBurns: (date: string) =>
     apiClient.get<BurnLog[]>(`/api/v1/health/burns?date=${encodeURIComponent(date)}`),

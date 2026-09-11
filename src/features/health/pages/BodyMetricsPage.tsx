@@ -35,6 +35,7 @@ export function BodyMetricsPage() {
 
   return (
     <GrgShell
+      light
       brand="iVelox"
       nav={
         <>
