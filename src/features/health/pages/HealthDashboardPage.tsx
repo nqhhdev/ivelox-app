@@ -1,27 +1,26 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { GrgShell } from '@/shared/ui/GrgShell'
 import { useAuthStore } from '@/shared/hooks/useAuth'
 import { useToast } from '@/shared/hooks/useToast'
-import { localISODate } from '../lib/date'
+import { localISODate, loggedAtForDate } from '../lib/date'
 import { useMeals } from '../hooks/useMeals'
 import { useTodaySummary } from '../hooks/useTodaySummary'
 import { useMealLog } from '../hooks/useMealLog'
-import { MealList } from '../components/MealList'
-import { MealPlanList } from '../components/MealPlanList'
-import { MedicalAnalyticsDashboard } from '../components/MedicalAnalyticsDashboard'
+import { HealthBoard } from '../components/HealthBoard'
 import { BoardModal } from '../components/BoardModal'
 import { MealLogForm } from '../components/MealLogForm'
 import { ResolvePreview } from '../components/ResolvePreview'
 import { HealthNavLinks } from '../components/HealthNavLinks'
 import { healthApi } from '../api/healthApi'
 import { GoalsForm } from './GoalsPage'
-import { useState } from 'react'
 import type { DayMealSummary, FoodUnit } from '../types'
 
 type Panel = 'log' | 'goals' | 'burns' | null
 
 export function HealthDashboardPage() {
-  const date = localISODate()
+  const today = localISODate()
+  const [date, setDate] = useState(today)
   const toast = useToast()
   const qc = useQueryClient()
   const summary = useTodaySummary(date)
@@ -41,6 +40,7 @@ export function HealthDashboardPage() {
   }
 
   const log = useMealLog({
+    date,
     embedded: true,
     onLogged: () => {
       setPanel(null)
@@ -81,9 +81,10 @@ export function HealthDashboardPage() {
       healthApi.createBurn({
         activity_name: burnName,
         duration_min: Number(burnMin) || 30,
+        ...(date !== today ? { logged_at: loggedAtForDate(date) } : {}),
       }),
     onSuccess: () => {
-      toast.success('Burn logged')
+      toast.success(date !== today ? `Burn logged for ${date}` : 'Burn logged')
       setPanel(null)
       refresh()
     },
@@ -103,6 +104,7 @@ export function HealthDashboardPage() {
 
   return (
     <GrgShell
+      light
       brand="iVelox"
       nav={
         <>
@@ -114,48 +116,39 @@ export function HealthDashboardPage() {
       }
     >
       {summary.isError && (
-        <p className="grg-error" style={{ padding: '0 1.25rem' }}>
-          Could not load today&apos;s summary.
+        <p className="grg-error" style={{ padding: '0 1.5rem' }}>
+          Could not load this day&apos;s summary.
         </p>
       )}
 
-      <MedicalAnalyticsDashboard
+      <HealthBoard
+        date={date}
+        onDateChange={setDate}
         summary={data}
         goal={goal.data}
-        saving={weightMut.isPending}
-        onSaveWeight={(kg) => weightMut.mutate(kg)}
+        meals={meals.list.data ?? []}
+        mealsLoading={meals.list.isPending && meals.list.data == null}
+        deletingId={meals.remove.isPending ? meals.remove.variables : null}
+        onDeleteMeal={(id) => {
+          if (!window.confirm('Delete this meal?')) return
+          meals.remove.mutate(id, {
+            onError: (e) => toast.error(e, 'Could not delete meal.'),
+          })
+        }}
+        onStatus={(meal_type, status) => slotMut.mutate({ meal_type, status })}
         onLogMeal={() => setPanel('log')}
         onLogBurn={() => setPanel('burns')}
         onGoals={() => setPanel('goals')}
         onCloseDay={() => closeMut.mutate()}
-        mealsSlot={
-          <>
-            <p className="med-kicker">{date} · Meals</p>
-            <MealPlanList
-              slots={data.meal_plan ?? []}
-              onStatus={(meal_type, status) => slotMut.mutate({ meal_type, status })}
-            />
-            <div style={{ height: 10 }} />
-            {meals.list.isLoading ? (
-              <p className="med-muted">Loading meals…</p>
-            ) : (
-              <MealList
-                meals={meals.list.data ?? []}
-                deletingId={meals.remove.isPending ? meals.remove.variables : null}
-                onDelete={(id) => {
-                  if (!window.confirm('Delete this meal?')) return
-                  meals.remove.mutate(id, {
-                    onError: (e) => toast.error(e, 'Could not delete meal.'),
-                  })
-                }}
-              />
-            )}
-          </>
-        }
+        onSaveWeight={(kg) => weightMut.mutate(kg)}
+        savingWeight={weightMut.isPending}
       />
 
       {panel === 'log' && (
-        <BoardModal title="Log meal" onClose={() => setPanel(null)}>
+        <BoardModal
+          title={date === today ? 'Log meal' : `Log meal · ${date}`}
+          onClose={() => setPanel(null)}
+        >
           <p className="grg-hint" style={{ marginBottom: '0.75rem' }}>
             Text helps, but a photo is better when the name is unclear.
           </p>
@@ -196,7 +189,10 @@ export function HealthDashboardPage() {
       )}
 
       {panel === 'burns' && (
-        <BoardModal title="Log burn" onClose={() => setPanel(null)}>
+        <BoardModal
+          title={date === today ? 'Log burn' : `Log burn · ${date}`}
+          onClose={() => setPanel(null)}
+        >
           <form
             className="grg-stack"
             onSubmit={(e) => {

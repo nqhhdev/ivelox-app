@@ -1,17 +1,17 @@
-/** Global design tokens — aligned with giantrobotgame.com aesthetic */
+/** Global design tokens — 3dviz.dev cream / forest system */
 export const tokens = {
-  accent: '#75d18c',
-  accentSoft: 'rgba(117, 209, 140, 0.12)',
-  accentBorder: 'rgba(117, 209, 140, 0.45)',
-  ink: '#eef0f2',
-  text: 'rgba(238, 240, 242, 0.62)',
-  muted: 'rgba(238, 240, 242, 0.62)',
-  bg: '#03090b',
-  panel: 'rgba(11, 57, 84, 0.35)',
-  border: 'rgb(11, 57, 84)',
-  borderStrong: 'rgba(117, 209, 140, 0.45)',
+  accent: '#0b7553',
+  accentSoft: '#e2f4ea',
+  accentBorder: '#cfe9dc',
+  ink: '#1c2a23',
+  text: '#3a453f',
+  muted: '#55605a',
+  bg: '#fffaf2',
+  panel: '#ffffff',
+  border: '#e2ede6',
+  borderStrong: '#d7e7dd',
   danger: '#f08282',
-  success: '#75d18c',
+  success: '#0b7553',
   warning: '#e8c56a',
   skills: {
     reading: { color: '#75d18c', soft: 'rgba(117, 209, 140, 0.12)' },
@@ -19,8 +19,8 @@ export const tokens = {
     writing: { color: '#75d18c', soft: 'rgba(117, 209, 140, 0.12)' },
     speaking: { color: '#75d18c', soft: 'rgba(117, 209, 140, 0.12)' },
   },
-  font: "'Work Sans', Lato, sans-serif",
-  mono: "ui-monospace, 'JetBrains Mono', 'Fira Code', monospace",
+  font: "'Outfit Variable', Outfit, ui-sans-serif, system-ui, sans-serif",
+  mono: "'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace",
 } as const
 
 export type SkillKey = keyof typeof tokens.skills

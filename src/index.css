@@ -1,29 +1,30 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/outfit";
+@import "@fontsource-variable/jetbrains-mono";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --text: rgba(238, 240, 242, 0.62);
-  --text-h: rgb(117, 209, 140);
-  --bg: rgb(3, 9, 11);
-  --border: rgb(11, 57, 84);
-  --code-bg: rgba(11, 57, 84, 0.45);
-  --accent: rgb(117, 209, 140);
-  --accent-bg: rgba(117, 209, 140, 0.12);
-  --accent-border: rgba(117, 209, 140, 0.45);
-  --social-bg: rgba(11, 57, 84, 0.35);
-  --shadow: rgba(0, 0, 0, 0.45) 0 24px 60px;
+  --text: #3a453f;
+  --text-h: #0b7553;
+  --bg: #fffaf2;
+  --border: #e2ede6;
+  --code-bg: #e2f4ea;
+  --accent: #0b7553;
+  --accent-bg: #e2f4ea;
+  --accent-border: #cfe9dc;
+  --social-bg: #f4faf6;
+  --shadow: 0 10px 24px #0b755333;
 
-  --sans: 'Work Sans', Lato, sans-serif;
-  --heading: 'Work Sans', Lato, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --sans: 'Outfit Variable', Outfit, ui-sans-serif, system-ui, sans-serif;
+  --heading: 'Outfit Variable', Outfit, ui-sans-serif, system-ui, sans-serif;
+  --mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
 
-  font: 300 16px/145% var(--sans);
-  letter-spacing: 0.02em;
-  color-scheme: dark;
+  font: 400 16px/150% var(--sans);
+  letter-spacing: 0;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -89,9 +90,11 @@ code {
 @layer base {
   .theme {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'Outfit Variable', Outfit, ui-sans-serif, system-ui, sans-serif;
   }
   :root {
+    --font-sans: 'Outfit Variable', Outfit, ui-sans-serif, system-ui, sans-serif;
+    --font-heading: 'Outfit Variable', Outfit, ui-sans-serif, system-ui, sans-serif;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -162,10 +165,15 @@ code {
     border-color: var(--border);
   }
   body {
-    background-color: rgb(3, 9, 11);
-    color: rgb(238, 240, 242);
+    background-color: #fffaf2;
+    color: #1c2a23;
+    font-family: var(--sans);
   }
-  html {
-    font-family: 'Work Sans', Lato, sans-serif;
+  html,
+  button,
+  input,
+  select,
+  textarea {
+    font-family: var(--sans);
   }
 }

@@ -46,6 +46,7 @@ export function BurnsPage() {
 
   return (
     <GrgShell
+      light
       brand="iVelox"
       nav={
         <>

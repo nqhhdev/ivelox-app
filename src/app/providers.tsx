@@ -21,13 +21,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <Toaster
         position="top-right"
         closeButton
-        theme="dark"
+        theme="light"
         toastOptions={{
           style: {
-            background: 'rgb(3, 9, 11)',
-            border: '1px solid rgb(11, 57, 84)',
-            color: 'rgb(238, 240, 242)',
-            fontFamily: "'Work Sans', Lato, sans-serif",
+            background: '#fffaf2',
+            border: '1px solid #e2ede6',
+            color: '#1c2a23',
+            fontFamily: "'Outfit Variable', Outfit, ui-sans-serif, system-ui, sans-serif",
           },
         }}
       />
