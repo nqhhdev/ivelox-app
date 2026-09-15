@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { DayMealSummary, HealthGoal, MealLog } from '../types'
 import { MealList } from './MealList'
 import { MealPlanList } from './MealPlanList'
@@ -74,10 +74,12 @@ export function HealthBoard({
   const [weight, setWeight] = useState(
     summary.weight_kg_today != null ? String(summary.weight_kg_today) : '',
   )
-
-  useEffect(() => {
+  const [lastWeightKey, setLastWeightKey] = useState(`${date}:${summary.weight_kg_today}`)
+  const weightKey = `${date}:${summary.weight_kg_today}`
+  if (weightKey !== lastWeightKey) {
+    setLastWeightKey(weightKey)
     setWeight(summary.weight_kg_today != null ? String(summary.weight_kg_today) : '')
-  }, [summary.weight_kg_today, date])
+  }
 
   return (
     <div className="hb">

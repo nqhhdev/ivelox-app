@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FoodItem, FoodUnit, ResolveResult } from '../types'
 
 export interface ResolvePreviewProps {
@@ -29,10 +29,11 @@ export function ResolvePreview({
   onBack,
 }: ResolvePreviewProps) {
   const [qtyText, setQtyText] = useState(String(quantity))
-
-  useEffect(() => {
+  const [lastQuantity, setLastQuantity] = useState(quantity)
+  if (quantity !== lastQuantity) {
+    setLastQuantity(quantity)
     setQtyText(String(quantity))
-  }, [quantity])
+  }
 
   const totals = items.reduce(
     (acc, item) => ({

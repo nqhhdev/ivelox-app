@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { GrgShell } from '@/shared/ui/GrgShell'
@@ -39,29 +39,29 @@ export function GoalsForm({ onSaved }: { onSaved?: () => void }) {
   const [weeks, setWeeks] = useState('12')
   const [mealTypes, setMealTypes] = useState<string[]>(['breakfast', 'lunch', 'dinner', 'snack'])
 
-  useEffect(() => {
-    if (body.data) {
-      setHeight(String(body.data.height_cm))
-      setWeight(String(body.data.weight_kg))
-    }
-  }, [body.data])
+  const [prefilledFromBody, setPrefilledFromBody] = useState(false)
+  if (body.data && !prefilledFromBody) {
+    setPrefilledFromBody(true)
+    setHeight(String(body.data.height_cm))
+    setWeight(String(body.data.weight_kg))
+  }
 
-  useEffect(() => {
-    if (goal.data) {
-      if (goal.data.height_cm != null) setHeight(String(goal.data.height_cm))
-      if (goal.data.weight_kg != null) setWeight(String(goal.data.weight_kg))
-      if (goal.data.sex) setSex(goal.data.sex)
-      if (goal.data.age_years != null) setAge(String(goal.data.age_years))
-      if (goal.data.activity_level) setActivity(goal.data.activity_level)
-      if (goal.data.weight_change_pct != null) setChangePct(String(goal.data.weight_change_pct))
-      if (goal.data.weeks != null) setWeeks(String(goal.data.weeks))
-      if (goal.data.meal_plan?.length) {
-        setMealTypes(goal.data.meal_plan.map((s) => s.meal_type))
-      } else if (goal.data.meal_types?.length) {
-        setMealTypes(goal.data.meal_types)
-      }
+  const [prefilledFromGoal, setPrefilledFromGoal] = useState(false)
+  if (goal.data && !prefilledFromGoal) {
+    setPrefilledFromGoal(true)
+    if (goal.data.height_cm != null) setHeight(String(goal.data.height_cm))
+    if (goal.data.weight_kg != null) setWeight(String(goal.data.weight_kg))
+    if (goal.data.sex) setSex(goal.data.sex)
+    if (goal.data.age_years != null) setAge(String(goal.data.age_years))
+    if (goal.data.activity_level) setActivity(goal.data.activity_level)
+    if (goal.data.weight_change_pct != null) setChangePct(String(goal.data.weight_change_pct))
+    if (goal.data.weeks != null) setWeeks(String(goal.data.weeks))
+    if (goal.data.meal_plan?.length) {
+      setMealTypes(goal.data.meal_plan.map((s) => s.meal_type))
+    } else if (goal.data.meal_types?.length) {
+      setMealTypes(goal.data.meal_types)
     }
-  }, [goal.data])
+  }
 
   const toggleMeal = (id: string) => {
     setMealTypes((prev) => {
