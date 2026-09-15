@@ -75,7 +75,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!text) {
     return undefined as T
   }
-  return JSON.parse(text) as T
+  const parsed = JSON.parse(text) as unknown
+  // Backend wraps every JSON body in { data, error }; unwrap so callers keep working
+  // against the same shapes as before. A body without that envelope (e.g. an
+  // unexpected format) is returned as-is rather than silently dropped.
+  if (parsed && typeof parsed === 'object' && 'data' in parsed && 'error' in parsed) {
+    return (parsed as { data: T }).data
+  }
+  return parsed as T
 }
 
 export const apiClient = {
