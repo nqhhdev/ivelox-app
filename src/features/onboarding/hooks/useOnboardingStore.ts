@@ -84,22 +84,18 @@ export const useOnboardingStore = create<OnboardingState>()(
         // Optimistic: mark complete locally immediately
         set({ isComplete: true })
 
-        try {
-          await apiClient.post('/api/onboarding', {
-            displayName: state.displayName,
-            nativeLanguage: state.nativeLanguage,
-            avatarUrl: state.avatarUrl,
-            ieltsType: state.ieltsType,
-            selfReport: state.selfReport,
-            goalPreset: state.goalPreset,
-            targetBand: state.targetBand,
-            targetDate: state.targetDate,
-          })
-        } catch (err) {
-          // Network error: keep isComplete=true locally for offline-first UX
-          // Re-throw so call sites can show error feedback if needed
-          throw err
-        }
+        // Network error: isComplete stays true locally for offline-first UX;
+        // the rejection still propagates so call sites can show error feedback.
+        await apiClient.post('/api/onboarding', {
+          displayName: state.displayName,
+          nativeLanguage: state.nativeLanguage,
+          avatarUrl: state.avatarUrl,
+          ieltsType: state.ieltsType,
+          selfReport: state.selfReport,
+          goalPreset: state.goalPreset,
+          targetBand: state.targetBand,
+          targetDate: state.targetDate,
+        })
       },
 
       reset: () => set(initialState),

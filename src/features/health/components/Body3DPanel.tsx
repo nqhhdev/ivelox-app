@@ -8,7 +8,7 @@ import {
   useWebGLOk,
   type AtlasRegion,
   type BodyLayer,
-} from './body3d/Body3DCanvas'
+} from './body3d/bodyModel'
 
 const Body3DCanvas = lazy(() =>
   import('./body3d/Body3DCanvas').then((m) => ({ default: m.Body3DCanvas })),

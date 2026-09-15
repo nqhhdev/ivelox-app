@@ -5,31 +5,7 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { AnatomyLayer } from './bodyMetrics'
-
-export type { AnatomyLayer } from './bodyMetrics'
-export {
-  estimateBodyFatPct,
-  visceralFatScore,
-  healthScore,
-  useWebGLOk,
-} from './bodyMetrics'
-
-export type JointCallout = {
-  id: string
-  label: string
-  position: [number, number, number]
-  mobility: number | null
-  inflammation: 'Low' | 'Moderate' | 'High' | '—'
-}
-
-export const JOINTS: JointCallout[] = [
-  { id: 'shoulder', label: 'Shoulder', position: [0.28, 1.25, 0.05], mobility: null, inflammation: '—' },
-  { id: 'elbow', label: 'Elbow', position: [0.42, 0.95, 0.02], mobility: null, inflammation: '—' },
-  { id: 'wrist', label: 'Wrist', position: [0.48, 0.62, 0.02], mobility: null, inflammation: '—' },
-  { id: 'hip', label: 'Hip', position: [0.14, 0.72, 0.04], mobility: null, inflammation: '—' },
-  { id: 'knee', label: 'Knee', position: [0.14, 0.38, 0.06], mobility: null, inflammation: '—' },
-  { id: 'ankle', label: 'Ankle', position: [0.12, 0.08, 0.04], mobility: null, inflammation: '—' },
-]
+import { JOINTS, type JointCallout } from './joints'
 
 function meshType(obj: THREE.Object3D): string {
   const t = (obj.userData?.type as string | undefined)?.toLowerCase()
